@@ -2,7 +2,7 @@
 
 ![yo!](https://media.giphy.com/media/JoYtQguJdpwiY/giphy.gif)
 
-** LETS BUILD A ANSIBLE YO! **
+**LETS BUILD A ANSIBLE YO!**
 
 ## Building!
 
