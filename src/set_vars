@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby
+
+require 'fog/aws'
+require 'optparse'
+
+ACCESS_KEY=ENV.fetch('AWS_ACCESS_KEY')
+SECRET_KEY=ENV.fetch('AWS_SECRET_KEY')
+REGION=ENV.fetch('AWS_REGION', 'eu-west-1')
+ROLE=ENV.fetch('AWS_ROLE', 'MioRole')
+
+class AWS
+  attr_accessor :client
+  def initialize client, vpc_name
+    @client = client
+    @vpc = vpc_lookup vpc_name
+  end
+
+  def security_group_lookup security_group
+    @client.security_groups.find{|s| s.vpc_id == @vpc and s.name == security_group}
+  end
+
+  def vpc_subnets
+    @client.subnets.select{|s| s.vpc_id == @vpc}.map( &:subnet_id )
+  end
+
+  private
+  def vpc_lookup vpc_name
+    @client.vpcs.find{|v| v.tags['Name'] == vpc_name}.id
+  end
+end
+
+vpc_name = 'default'
+security_group_name = 'default'
+role_name = ROLE
+
+OptionParser.new do|opts|
+  opts.banner = "#{$0} [opts]"
+  opts.on('-v', '--vpc name', 'VPC Name')                        {|o| vpc_name = o}
+  opts.on('-s', '--security_group name', 'Securtity Group Name') {|o| security_group_name = o}
+  opts.on('-r', '--role_group name', 'IAM Role Name')            {|o| role_name = o}
+end.parse!
+
+c = Fog::Compute.new(
+  provider: 'AWS',
+  aws_access_key_id: ACCESS_KEY,
+  aws_secret_access_key: SECRET_KEY,
+  region: REGION
+)
+
+iam = Fog::AWS::IAM.new(
+  aws_access_key_id: ACCESS_KEY,
+  aws_secret_access_key: SECRET_KEY
+)
+
+a = AWS.new c, vpc_name
+
+vpc_subnets = a.vpc_subnets
+security_group = a.security_group_lookup security_group_name
+
+
+puts "export SECURITY_GROUP_ID=#{security_group.group_id}"
+vpc_subnets.each_with_index do |s,i|
+  puts "export SUBNET_#{i}=#{s}"
+end
+
+puts "export ROLE_ARN=#{iam.get_role(role_name).data[:body]['Role']['Arn']}"

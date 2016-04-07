@@ -8,6 +8,14 @@
 
 ![deploy!](https://static1.bocoup.com/assets/2015/11/18172635/Deployment-animation-2.gif)
 
+```bash
+$ docker build -t vidyo .
+# PEWW! PEWW!
+$ docker docker run -ti -e CLUSTER_ID=jspc0 -e AWS_SECRET_KEY=$AWS_SECRET_KEY -e AWS_ACCESS_KEY=$AWS_ACCESS_KEY vidyo
+# YEAHHHHHH BOOOIIIIIII
+
+```
+
 ### Wait... Really?
 
 ![real-life](http://www.theodo.fr/uploads/blog//2015/10/isthisreallife.gif)
