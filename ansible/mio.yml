@@ -1,0 +1,135 @@
+- hosts: storage
+  become: yes
+  vars:
+    region: eu-west-1
+    ami: ami-31328842
+    env: p
+    ipcode: Pxxx
+    systemCode: 'Video-Platform'
+    description: 'Video Platform'
+    teamDL: james.condron@ft.com
+    environment_tag: default
+    storageInstanceType: m3.medium
+    instanceType: m3.large
+    shortName: mio
+
+  tasks:
+    - name: create export dirs
+      file:
+        path: "{{item}}"
+        state: directory
+        mode: 0755
+      with_items:
+        - /u01
+        - /u02
+
+    - name: export dirs
+      lineinfile:
+        dest: /etc/exports
+        create: yes
+        line: "{{item}} *(rw,all_squash,sync)"
+      with_items:
+        - /u01
+        - /u02
+
+    - name: pull down mio shit
+      get_url:
+        url: "https://s3-eu-west-1.amazonaws.com/mio-package-assets/{{item}}"
+        dest: /u01
+      with_items:
+        - java7.repo
+        - ns.repo
+        - MIO-Maint-5.1.4.tar.gz
+        - nem-upgrade.conf
+
+    - name: exportfs
+      shell: exportfs -a
+
+- hosts:
+  - master
+  - job
+  - index
+  become: yes
+  tasks:
+    - name: install nfs client
+      yum:
+        name: nfs-utils
+        state: latest
+
+    - name: create /stuff
+      file:
+        path: /stuff
+        state: directory
+        mode: 0755
+
+
+    - name: mount storage u01
+      mount:
+        fstype: nfs
+        src: "{{ hostvars[groups['storage'][0]]['ansible_eth0']['ipv4']['address'] }}:/u01"
+        name: /stuff
+        state: mounted
+
+    - name: copy repo files
+      copy:
+        src: "/stuff/{{item}}"
+        dest: "/etc/yum/repos.d/"
+      with_items:
+        - java7.repo
+        - ns.repo
+
+    - name: install packages
+      yum:
+        name: "{{item}}"
+        state: latest
+      with_items:
+        - nativsystems-environment-manager-agent
+        - jdk
+
+    - name: copy nem-upgrade
+      copy:
+        src: "/stuff/nem-upgrade.conf"
+        dest: /etc/
+
+
+- hosts:
+  - master
+  become: yes
+  vars:
+      type: master
+  tasks:
+    - name: write config
+      template:
+        src: /playbooks/templates/mio.conf
+        dest: /etc/mio.conf
+
+- hosts:
+  - index
+  become: yes
+  vars:
+    type: index
+  tasks:
+    - name: write config
+      template:
+        src: /playbooks/templates/mio.conf
+        dest: /etc/mio.conf
+
+- hosts:
+  - job
+  become: yes
+  vars:
+    type: job
+  tasks:
+    - name: write config
+      template:
+        src: /playbooks/templates/mio.conf
+        dest: /etc/mio.conf
+
+- hosts:
+    - master
+    - job
+    - index
+  become: yes
+  tasks:
+    - name: start shit
+      shell: nem upgrade
