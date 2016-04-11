@@ -54,6 +54,7 @@
         exact_count: 1
         vpc_subnet_id: "{{ subnet_2 }}"
         assign_public_ip: no
+        keypair: 'dios-mio'
         volumes:
           - device_name: /dev/xvda
             volume_size: 120
@@ -68,6 +69,8 @@
           description: "{{description}} storage box"
           teamDL: "{{teamDL}}"
           stopSchedule: "nostop"
+          mio_usage: 'storage'
+          cluster: '{{clusterid}}'
 
     - name: Provision Master instance
       ec2:
@@ -81,6 +84,7 @@
         exact_count: 1
         vpc_subnet_id: "{{ subnet_1 }}"
         assign_public_ip: yes
+        keypair: 'dios-mio'
         volumes:
           - device_name: /dev/xvda
             volume_size: 20
@@ -95,6 +99,8 @@
           description: "{{description}} Master"
           teamDL: "{{teamDL}}"
           stopSchedule: "nostop"
+          mio_usage: 'master'
+          cluster: '{{clusterid}}'
 
     - name: Provision Master instance
       ec2:
@@ -108,6 +114,7 @@
         exact_count: 1
         vpc_subnet_id: "{{ subnet_3 }}"
         assign_public_ip: yes
+        keypair: 'dios-mio'
         volumes:
           - device_name: /dev/xvda
             volume_size: 20
@@ -122,6 +129,8 @@
           description: "{{description}} Master"
           teamDL: "{{teamDL}}"
           stopSchedule: "nostop"
+          mio_usage: 'master'
+          cluster: '{{clusterid}}'
 
     - name: Provision Jobs instance
       ec2:
@@ -135,6 +144,7 @@
         exact_count: 1
         vpc_subnet_id: "{{ subnet_2 }}"
         assign_public_ip: no
+        keypair: 'dios-mio'
         volumes:
           - device_name: /dev/xvda
             volume_size: 20
@@ -149,6 +159,8 @@
           description: "{{description}} Job"
           teamDL: "{{teamDL}}"
           stopSchedule: "nostop"
+          mio_usage: 'job'
+          cluster: '{{clusterid}}'
 
     - name: Provision Jobs instance
       ec2:
@@ -162,6 +174,7 @@
         exact_count: 1
         vpc_subnet_id: "{{ subnet_1 }}"
         assign_public_ip: no
+        keypair: 'dios-mio'
         volumes:
           - device_name: /dev/xvda
             volume_size: 20
@@ -176,6 +189,8 @@
           description: "{{description}} Job"
           teamDL: "{{teamDL}}"
           stopSchedule: "nostop"
+          mio_usage: 'job'
+          cluster: '{{clusterid}}'
 
     - name: Provision Index instance
       ec2:
@@ -189,6 +204,7 @@
         exact_count: 1
         vpc_subnet_id: "{{ subnet_1 }}"
         assign_public_ip: no
+        keypair: 'dios-mio'
         volumes:
           - device_name: /dev/xvda
             volume_size: 20
@@ -203,6 +219,8 @@
           description: "{{description}} Index"
           teamDL: "{{teamDL}}"
           stopSchedule: "nostop"
+          mio_usage: 'index'
+          cluster: '{{clusterid}}'
 
     - name: Create buckets
       s3_bucket:
