@@ -2,10 +2,15 @@
 
 require 'fog/aws'
 require 'optparse'
+require 'inifile'
 
-ACCESS_KEY=ENV.fetch('AWS_ACCESS_KEY')
-SECRET_KEY=ENV.fetch('AWS_SECRET_KEY')
-REGION=ENV.fetch('AWS_REGION', 'eu-west-1')
+# Load the same creds as used by ansible and the CLI tool
+creds  = IniFile.load( File.join(ENV['HOME'], '.aws', 'credentials') )
+config = IniFile.load( File.join(ENV['HOME'], '.aws', 'config') )
+
+ACCESS_KEY=creds['default']['aws_access_key_id']
+SECRET_KEY=creds['default']['aws_secret_access_key']
+REGION=config['default']['region']
 ROLE=ENV.fetch('AWS_ROLE', 'MioRole')
 
 class AWS
@@ -23,6 +28,10 @@ class AWS
     @client.subnets.select{|s| s.vpc_id == @vpc}.map( &:subnet_id )
   end
 
+  def host_lookup cluster, type
+    @client.servers.map{|s| s.private_ip_address if s.tags['cluster'] == cluster and s.tags['mio_usage'] == type}.compact
+  end
+
   private
   def vpc_lookup vpc_name
     @client.vpcs.find{|v| v.tags['Name'] == vpc_name}.id
@@ -32,12 +41,16 @@ end
 vpc_name = 'default'
 security_group_name = 'default'
 role_name = ROLE
+mode = :preflight
+cluster = nil
 
 OptionParser.new do|opts|
   opts.banner = "#{$0} [opts]"
-  opts.on('-v', '--vpc name', 'VPC Name')                        {|o| vpc_name = o}
-  opts.on('-s', '--security_group name', 'Securtity Group Name') {|o| security_group_name = o}
-  opts.on('-r', '--role_group name', 'IAM Role Name')            {|o| role_name = o}
+  opts.on('-v', '--vpc name', 'VPC Name')                            {|o| vpc_name = o}
+  opts.on('-s', '--security_group name', 'Security Group Name')      {|o| security_group_name = o}
+  opts.on('-r', '--role_group name', 'IAM Role Name')                {|o| role_name = o}
+  opts.on('-m', '--mode [preflight|hosts]', 'Mode in which to run')  {|o| mode = o.to_sym}
+  opts.on('-c', '--cluster name', 'In hosts mode, cluster to query') {|o| cluster = o}
 end.parse!
 
 c = Fog::Compute.new(
@@ -52,15 +65,43 @@ iam = Fog::AWS::IAM.new(
   aws_secret_access_key: SECRET_KEY
 )
 
+rds = Fog::AWS::RDS.new(
+  aws_access_key_id: ACCESS_KEY,
+  aws_secret_access_key: SECRET_KEY,
+  region: REGION
+)
+
 a = AWS.new c, vpc_name
 
-vpc_subnets = a.vpc_subnets
-security_group = a.security_group_lookup security_group_name
+if mode == :preflight
+  vpc_subnets = a.vpc_subnets
+  security_group = a.security_group_lookup security_group_name
 
 
-puts "export SECURITY_GROUP_ID=#{security_group.group_id}"
-vpc_subnets.each_with_index do |s,i|
-  puts "export SUBNET_#{i}=#{s}"
+  puts "export SECURITY_GROUP_ID=#{security_group.group_id}"
+  vpc_subnets.each_with_index do |s,i|
+    puts "export SUBNET_#{i}=#{s}"
+  end
+
+  puts "export ROLE_ARN=#{iam.get_role(role_name).data[:body]['Role']['Arn']}"
+elsif mode == :hosts
+  raise ArgumentError, 'Hosts mode requires cluster_name to be set with -c' if cluster.nil?
+
+  File.open('/ansible_hosts', 'a') do |f|
+    %w{storage master job index}.each do |type|
+      f.puts "[#{type}]"
+      hosts = a.host_lookup(cluster, type)
+      hosts.each do |ip_addr|
+        f.puts "#{ip_addr} ansible_user=ec2-user ansible_ssh_private_key_file=/keys/dios-mio.pem"
+      end
+
+      puts "export #{type.upcase}_NODES=#{hosts.join(',')}"
+    end
+  end
+
+  dbs = rds.describe_db_instances.data[:body]['DescribeDBInstancesResult']['DBInstances']
+  url = dbs.find{|d| d['DBClusterIdentifier'] == "mio-db-#{cluster}-cluster"}['Endpoint']['Address']
+  puts "export DB_HOST=#{url}"
+else
+  raise ArgumentError, "mode #{mode.to_s} is invalid"
 end
-
-puts "export ROLE_ARN=#{iam.get_role(role_name).data[:body]['Role']['Arn']}"
