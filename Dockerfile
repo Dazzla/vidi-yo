@@ -29,6 +29,4 @@ RUN bundle install
 
 COPY src/ /tool
 
-COPY ansible /playbooks
-
 CMD /tool/entry_point.sh
