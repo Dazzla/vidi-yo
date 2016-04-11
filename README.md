@@ -6,8 +6,6 @@
 
 ## Building!
 
-![deploy!](https://static1.bocoup.com/assets/2015/11/18172635/Deployment-animation-2.gif)
-
 ```bash
 $ docker build -t vidyo .
 ```
