@@ -5,7 +5,7 @@
     region: eu-west-1
     ami: ami-31328842
     env: p
-    ipcode: Pxxx
+    ipcode: P386
     systemCode: 'Video-Platform'
     description: 'Video Platform'
     teamDL: james.condron@ft.com
@@ -15,19 +15,28 @@
     shortName: mio
 
   tasks:
+    - name: RDS can cunt off
+      shell: "aws rds create-db-cluster --db-cluster-identifier mio-db-{{clusterid}}-cluster --engine aurora --master-username admin --master-user-password {{db_password}} --tags Key=name,Value=mio-db-{{clusterid}}-cluster Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{systemCode}} Key=teamDl,Value={{teamDL}} Key=stopSchedule,Value=nostop"
+      ignore_errors: yes
+
+    - name: RDS can fucking definitly cunt off now
+      shell: "aws rds create-db-instance --db-instance-identifier mio-db-{{clusterid}}-host --engine aurora --db-cluster-identifier mio-db-{{clusterid}}-cluster --db-instance-class db.r3.xlarge --publicly-accessible --tags Key=name,Value=mio-db-{{clusterid}}-host Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{systemCode}} Key=teamDL,Value={{teamDL}} Key=stopSchedule,Value=nostop"
+      ignore_errors: yes
+
+    - name: Transcoders can cunt off too
+      shell: "aws elastictranscoder create-pipeline --name mio-{{clusterid}}-transcoder --input-bucket mio-raw-{{clusterid}} --output-bucket mio-raw-proxy-{{clusterid}} --role {{role}}"
+      ignore_errors: yes
 
     - name: cluster-elb
       ec2_elb_lb:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
         name: "mio-{{clusterid}}"
         state: present
-        security_group_ids: '{{security_group_id}}'
+        security_group_ids: "{{web_security_group_id}}"
         subnets:
-          - "{{ subnet_1 }}"
-          - "{{ subnet_2 }}"
-          - "{{ subnet_3 }}"
+          - "{{ private_subnet_1 }}"
+#          - "{{ subnet_2 }}"
+#          - "{{ subnet_3 }}"
         listeners:
           - protocol: http
             load_balancer_port: 80
@@ -44,15 +53,15 @@
 
     - name: Provision storage instance
       ec2:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
-        group_id: "{{security_group_id}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{private_security_group_id}}"
         image: "{{ami}}"
         instance_type: "{{storageInstanceType}}"
         wait: true
         exact_count: 1
-        vpc_subnet_id: "{{ subnet_2 }}"
+        vpc_subnet_id: "{{ private_subnet_2 }}"
         assign_public_ip: no
         keypair: 'dios-mio'
         volumes:
@@ -60,9 +69,9 @@
             volume_size: 120
             delete_on_termination: false
         count_tag:
-          Name: "ftmio{{clusterid}}01-law1a-eu-p"
+          Name: "ftmio{{clusterid}}01-law1a-eu-{{env}}"
         instance_tags:
-          Name: "ftmio{{clusterid}}01-law1a-eu-p"
+          Name: "ftmio{{clusterid}}01-law1a-eu-{{env}}"
           environment: "{{env}}"
           ipCode: "{{ipcode}}"
           systemCode: "{{systemCode}}"
@@ -74,15 +83,16 @@
 
     - name: Provision Master instance
       ec2:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
-        group_id: "{{security_group_id}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{web_security_group_id}}"
+          - "{{private_security_group_id}}"
         image: "{{ami}}"
         instance_type: "{{instanceType}}"
         wait: true
         exact_count: 1
-        vpc_subnet_id: "{{ subnet_1 }}"
+        vpc_subnet_id: "{{ private_subnet_1 }}"
         assign_public_ip: yes
         keypair: 'dios-mio'
         volumes:
@@ -90,9 +100,9 @@
             volume_size: 20
             delete_on_termination: false
         count_tag:
-          Name: 'ftmio{{clusterid}}02-law1a-eu-p'
+          Name: 'ftmio{{clusterid}}02-law1a-eu-{{env}}'
         instance_tags:
-          Name: "ftmio{{clusterid}}02-law1a-eu-p"
+          Name: "ftmio{{clusterid}}02-law1a-eu-{{env}}"
           environment: "{{env}}"
           ipCode: "{{ipcode}}"
           systemCode: "{{systemCode}}"
@@ -104,15 +114,16 @@
 
     - name: Provision Master instance
       ec2:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
-        group_id: "{{security_group_id}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{web_security_group_id}}"
+          - "{{private_security_group_id}}"
         image: "{{ami}}"
         instance_type: "{{instanceType}}"
         wait: true
         exact_count: 1
-        vpc_subnet_id: "{{ subnet_3 }}"
+        vpc_subnet_id: "{{ private_subnet_3 }}"
         assign_public_ip: yes
         keypair: 'dios-mio'
         volumes:
@@ -120,9 +131,9 @@
             volume_size: 20
             delete_on_termination: false
         count_tag:
-          Name: 'ftmio{{clusterid}}03-law1b-eu-p'
+          Name: 'ftmio{{clusterid}}03-law1b-eu-{{env}}'
         instance_tags:
-          Name: "ftmio{{clusterid}}03-law1b-eu-p"
+          Name: "ftmio{{clusterid}}03-law1b-eu-{{env}}"
           environment: "{{env}}"
           ipCode: "{{ipcode}}"
           systemCode: "{{systemCode}}"
@@ -134,15 +145,15 @@
 
     - name: Provision Jobs instance
       ec2:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
-        group_id: "{{security_group_id}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{private_security_group_id}}"
         image: "{{ami}}"
         instance_type: "{{instanceType}}"
         wait: true
         exact_count: 1
-        vpc_subnet_id: "{{ subnet_2 }}"
+        vpc_subnet_id: "{{ private_subnet_2 }}"
         assign_public_ip: no
         keypair: 'dios-mio'
         volumes:
@@ -150,9 +161,9 @@
             volume_size: 20
             delete_on_termination: false
         count_tag:
-          Name: 'ftmio{{clusterid}}04-law1b-eu-p'
+          Name: 'ftmio{{clusterid}}04-law1b-eu-{{env}}'
         instance_tags:
-          Name: "ftmio{{clusterid}}04-law1b-eu-p"
+          Name: "ftmio{{clusterid}}04-law1b-eu-{{env}}"
           environment: "{{env}}"
           ipCode: "{{ipcode}}"
           systemCode: "{{systemCode}}"
@@ -164,15 +175,15 @@
 
     - name: Provision Jobs instance
       ec2:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
-        group_id: "{{security_group_id}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{private_security_group_id}}"
         image: "{{ami}}"
         instance_type: "{{instanceType}}"
         wait: true
         exact_count: 1
-        vpc_subnet_id: "{{ subnet_1 }}"
+        vpc_subnet_id: "{{ private_subnet_1 }}"
         assign_public_ip: no
         keypair: 'dios-mio'
         volumes:
@@ -180,9 +191,9 @@
             volume_size: 20
             delete_on_termination: false
         count_tag:
-          Name: 'ftmio{{clusterid}}05-law1c-eu-p'
+          Name: 'ftmio{{clusterid}}05-law1c-eu-{{env}}'
         instance_tags:
-          Name: "ftmio{{clusterid}}05-law1c-eu-p"
+          Name: "ftmio{{clusterid}}05-law1c-eu-{{env}}"
           environment: "{{env}}"
           ipCode: "{{ipcode}}"
           systemCode: "{{systemCode}}"
@@ -194,15 +205,15 @@
 
     - name: Provision Index instance
       ec2:
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
         region: "{{region}}"
-        group_id: "{{security_group_id}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{private_security_group_id}}"
         image: "{{ami}}"
         instance_type: "{{instanceType}}"
         wait: true
         exact_count: 1
-        vpc_subnet_id: "{{ subnet_1 }}"
+        vpc_subnet_id: "{{ private_subnet_1 }}"
         assign_public_ip: no
         keypair: 'dios-mio'
         volumes:
@@ -210,9 +221,9 @@
             volume_size: 20
             delete_on_termination: false
         count_tag:
-          Name: 'ftmio{{clusterid}}06-law1c-eu-p'
+          Name: 'ftmio{{clusterid}}06-law1c-eu-{{env}}'
         instance_tags:
-          Name: "ftmio{{clusterid}}06-law1c-eu-p"
+          Name: "ftmio{{clusterid}}06-law1c-eu-{{env}}"
           environment: "{{env}}"
           ipCode: "{{ipcode}}"
           systemCode: "{{systemCode}}"
@@ -232,15 +243,3 @@
         - edit-proxy
         - audio
         - web-video
-
-    - name: RDS can cunt off
-      shell: "aws rds create-db-cluster --db-cluster-identifier mio-db-{{clusterid}}-cluster --engine aurora --master-username admin --master-user-password {{db_password}} --tags Key=name,Value=mio-db-{{clusterid}}-cluster Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{systemCode}} Key=teamDl,Value={{teamDL}} Key=stopSchedule,Value=nostop"
-      ignore_errors: yes
-
-    - name: RDS can fucking definitly cunt off now
-      shell: "aws rds create-db-instance --db-instance-identifier mio-db-{{clusterid}}-host --engine aurora --db-cluster-identifier mio-db-{{clusterid}}-cluster --db-instance-class db.r3.xlarge --tags --tags Key=name,Value=mio-db-{{clusterid}}-host Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{systemCode}} Key=teamDL,Value={{teamDL}} Key=stopSchedule,Value=nostop"
-      ignore_errors: yes
-
-    - name: Transcoders can cunt off too
-      shell: "aws elastictranscoder create-pipeline --name mio-{{clusterid}}-transcoder --input-bucket mio-raw-{{clusterid}} --output-bucket mio-raw-proxy-{{clusterid}} --role {{role}}"
-      ignore_errors: yes
