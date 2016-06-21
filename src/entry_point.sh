@@ -8,11 +8,20 @@ set -x
 : ${AMI:=ami-31328842}
 : ${DB_PASSWORD:=iamsoVERYsmart}
 : ${DOMAIN:=master.dev.nativ-systems.com}
-: ${ENV:=p}
+: ${ENV:=t}
+: ${IPCODE:=P386}
 : ${REGION:=eu-west-1}
-: ${ROLE_NAME:=MioRole}
-: ${SECURITY_GROUP_NAME:=default}
-: ${VPC_NAME:=default}
+: ${ROLE_NAME:=FTMioRole}
+: ${SECURITY_GROUP_NAME:=ESR-Video-Test-VPC-Resources-SG}
+: ${VPC_NAME:=ESR-Video-Test-VPC}
+
+mkdir -p ~/.ssh
+touch ~/.ssh/known_hosts
+cat > ~/.ssh/config <<EOF
+Host 10.*
+   StrictHostKeyChecking no
+   UserKnownHostsFile=/dev/null
+EOF
 
 cat > /ansible_hosts <<EOF
 [localhost]
@@ -28,18 +37,25 @@ eval $(/tool/set_vars -v "${VPC_NAME}" -s "${SECURITY_GROUP_NAME}" -r "${ROLE_NA
 ansible-playbook -i /ansible_hosts /playbooks/instances.yml --extra-vars " \
     clusterid=$CLUSTER_ID \
     security_group_id=$SECURITY_GROUP_ID \
+    web_security_group_id=$WEB_SECURITY_GROUP_ID \
+    private_security_group_id=$PRIVATE_SECURITY_GROUP_ID \
     role=$ROLE_ARN \
-    subnet_1=$SUBNET_0 \
-    subnet_2=$SUBNET_1 \
-    subnet_3=$SUBNET_2 \
+    public_subnet_1=$PUBLIC_SUBNET_0 \
+    public_subnet_2=$PUBLIC_SUBNET_1 \
+    public_subnet_3=$PUBLIC_SUBNET_2 \
+    private_subnet_1=$PRIVATE_SUBNET_0 \
+    private_subnet_2=$PRIVATE_SUBNET_1 \
+    private_subnet_3=$PRIVATE_SUBNET_2 \
     env=$ENV \
     ami=$AMI \
     region=$REGION \
+    ipcode=$IPCODE \
     db_password=$DB_PASSWORD "
 
-eval $(/tool/set_vars -m hosts -c $CLUSTER_ID)
+eval $(/tool/set_vars -m hosts -v "${VPC_NAME}" -c "${CLUSTER_ID}")
 
 ansible-playbook --check -vvv -i /ansible_hosts /playbooks/mio.yml --extra-vars " \
+    clusterid=$CLUSTER_ID \
     db_host=$DB_HOST \
     db_password=$DB_PASSWORD \
     domain=$DOMAIN \

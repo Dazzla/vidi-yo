@@ -19,6 +19,7 @@ GEM
       fog-core
       nokogiri (~> 1.5, >= 1.5.11)
     formatador (0.2.5)
+    inifile (3.0.0)
     ipaddress (0.8.3)
     mini_portile2 (2.0.0)
     multi_json (1.11.2)
@@ -30,6 +31,7 @@ PLATFORMS
 
 DEPENDENCIES
   fog-aws
+  inifile
 
 BUNDLED WITH
    1.11.2

@@ -21,11 +21,15 @@ class AWS
   end
 
   def security_group_lookup security_group
-    @client.security_groups.find{|s| s.vpc_id == @vpc and s.name == security_group}
+    @client.security_groups.find{|s| s.vpc_id == @vpc and s.tags['Name'] =~ /#{security_group}/ }
   end
 
-  def vpc_subnets
-    @client.subnets.select{|s| s.vpc_id == @vpc}.map( &:subnet_id )
+  def vpc_public_subnets
+    vpc_subnets 'Public'
+  end
+
+  def vpc_private_subnets
+    vpc_subnets 'Private'
   end
 
   def host_lookup cluster, type
@@ -33,6 +37,13 @@ class AWS
   end
 
   private
+  def vpc_subnets desc_string
+    subnets = @client.subnets.select{|s| s.vpc_id == @vpc and s.tag_set['Description'] =~ /#{desc_string}/ }.map( &:subnet_id )
+    until subnets.size >= 3
+      subnets << subnets.sample
+    end
+    subnets
+  end
   def vpc_lookup vpc_name
     @client.vpcs.find{|v| v.tags['Name'] == vpc_name}.id
   end
@@ -74,13 +85,21 @@ rds = Fog::AWS::RDS.new(
 a = AWS.new c, vpc_name
 
 if mode == :preflight
-  vpc_subnets = a.vpc_subnets
   security_group = a.security_group_lookup security_group_name
-
-
   puts "export SECURITY_GROUP_ID=#{security_group.group_id}"
-  vpc_subnets.each_with_index do |s,i|
-    puts "export SUBNET_#{i}=#{s}"
+
+  web_security_group = a.security_group_lookup 'Web'
+  puts "export WEB_SECURITY_GROUP_ID=#{web_security_group.group_id}"
+
+  private_security_group = a.security_group_lookup 'Private'
+  puts "export PRIVATE_SECURITY_GROUP_ID=#{private_security_group.group_id}"
+
+  a.vpc_public_subnets.each_with_index do |s,i|
+    puts "export PUBLIC_SUBNET_#{i}=#{s}"
+  end
+
+  a.vpc_private_subnets.each_with_index do |s,i|
+    puts "export PRIVATE_SUBNET_#{i}=#{s}"
   end
 
   puts "export ROLE_ARN=#{iam.get_role(role_name).data[:body]['Role']['Arn']}"
