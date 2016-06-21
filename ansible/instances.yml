@@ -3,239 +3,22 @@
 
   vars:
     region: eu-west-1
-    ami: ami-31328842
+    ami: ami-c39604b0
     env: p
     ipcode: P386
-    systemCode: 'Video-Platform'
+    system_code: 'Video-Platform'
     description: 'Video Platform'
-    teamDL: james.condron@ft.com
+    team_dl: james.condron@ft.com
     environment_tag: default
-    storageInstanceType: m3.medium
-    instanceType: m3.large
-    shortName: mio
+    storage_instance_type: m3.medium
+    instance_type: m3.large
+    short_name: mio
 
   tasks:
-    - name: RDS can cunt off
-      shell: "aws rds create-db-cluster --db-cluster-identifier mio-db-{{clusterid}}-cluster --engine aurora --master-username admin --master-user-password {{db_password}} --tags Key=name,Value=mio-db-{{clusterid}}-cluster Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{systemCode}} Key=teamDl,Value={{teamDL}} Key=stopSchedule,Value=nostop"
-      ignore_errors: yes
-
-    - name: RDS can fucking definitly cunt off now
-      shell: "aws rds create-db-instance --db-instance-identifier mio-db-{{clusterid}}-host --engine aurora --db-cluster-identifier mio-db-{{clusterid}}-cluster --db-instance-class db.r3.xlarge --publicly-accessible --tags Key=name,Value=mio-db-{{clusterid}}-host Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{systemCode}} Key=teamDL,Value={{teamDL}} Key=stopSchedule,Value=nostop"
-      ignore_errors: yes
-
-    - name: Transcoders can cunt off too
-      shell: "aws elastictranscoder create-pipeline --name mio-{{clusterid}}-transcoder --input-bucket mio-raw-{{clusterid}} --output-bucket mio-raw-proxy-{{clusterid}} --role {{role}}"
-      ignore_errors: yes
-
-    - name: cluster-elb
-      ec2_elb_lb:
-        region: "{{region}}"
-        name: "mio-{{clusterid}}"
-        state: present
-        security_group_ids: "{{web_security_group_id}}"
-        subnets:
-          - "{{ private_subnet_1 }}"
-#          - "{{ subnet_2 }}"
-#          - "{{ subnet_3 }}"
-        listeners:
-          - protocol: http
-            load_balancer_port: 80
-            instance_port: 80
-        purge_listeners: True
-        health_check:
-          ping_protocol: tcp # options are http, https, ssl, tcp
-          ping_port: 80
-          response_timeout: 5 # seconds
-          interval: 30 # seconds
-          unhealthy_threshold: 2
-          healthy_threshold: 10
-      register: cluster_elb
-
-    - name: Provision storage instance
-      ec2:
-        region: "{{region}}"
-        group_id:
-          - "{{security_group_id}}"
-          - "{{private_security_group_id}}"
-        image: "{{ami}}"
-        instance_type: "{{storageInstanceType}}"
-        wait: true
-        exact_count: 1
-        vpc_subnet_id: "{{ private_subnet_2 }}"
-        assign_public_ip: no
-        keypair: 'dios-mio'
-        volumes:
-          - device_name: /dev/xvda
-            volume_size: 120
-            delete_on_termination: false
-        count_tag:
-          Name: "ftmio{{clusterid}}01-law1a-eu-{{env}}"
-        instance_tags:
-          Name: "ftmio{{clusterid}}01-law1a-eu-{{env}}"
-          environment: "{{env}}"
-          ipCode: "{{ipcode}}"
-          systemCode: "{{systemCode}}"
-          description: "{{description}} storage box"
-          teamDL: "{{teamDL}}"
-          stopSchedule: "nostop"
-          mio_usage: 'storage'
-          cluster: '{{clusterid}}'
-
-    - name: Provision Master instance
-      ec2:
-        region: "{{region}}"
-        group_id:
-          - "{{security_group_id}}"
-          - "{{web_security_group_id}}"
-          - "{{private_security_group_id}}"
-        image: "{{ami}}"
-        instance_type: "{{instanceType}}"
-        wait: true
-        exact_count: 1
-        vpc_subnet_id: "{{ private_subnet_1 }}"
-        assign_public_ip: yes
-        keypair: 'dios-mio'
-        volumes:
-          - device_name: /dev/xvda
-            volume_size: 20
-            delete_on_termination: false
-        count_tag:
-          Name: 'ftmio{{clusterid}}02-law1a-eu-{{env}}'
-        instance_tags:
-          Name: "ftmio{{clusterid}}02-law1a-eu-{{env}}"
-          environment: "{{env}}"
-          ipCode: "{{ipcode}}"
-          systemCode: "{{systemCode}}"
-          description: "{{description}} Master"
-          teamDL: "{{teamDL}}"
-          stopSchedule: "nostop"
-          mio_usage: 'master'
-          cluster: '{{clusterid}}'
-
-    - name: Provision Master instance
-      ec2:
-        region: "{{region}}"
-        group_id:
-          - "{{security_group_id}}"
-          - "{{web_security_group_id}}"
-          - "{{private_security_group_id}}"
-        image: "{{ami}}"
-        instance_type: "{{instanceType}}"
-        wait: true
-        exact_count: 1
-        vpc_subnet_id: "{{ private_subnet_3 }}"
-        assign_public_ip: yes
-        keypair: 'dios-mio'
-        volumes:
-          - device_name: /dev/xvda
-            volume_size: 20
-            delete_on_termination: false
-        count_tag:
-          Name: 'ftmio{{clusterid}}03-law1b-eu-{{env}}'
-        instance_tags:
-          Name: "ftmio{{clusterid}}03-law1b-eu-{{env}}"
-          environment: "{{env}}"
-          ipCode: "{{ipcode}}"
-          systemCode: "{{systemCode}}"
-          description: "{{description}} Master"
-          teamDL: "{{teamDL}}"
-          stopSchedule: "nostop"
-          mio_usage: 'master'
-          cluster: '{{clusterid}}'
-
-    - name: Provision Jobs instance
-      ec2:
-        region: "{{region}}"
-        group_id:
-          - "{{security_group_id}}"
-          - "{{private_security_group_id}}"
-        image: "{{ami}}"
-        instance_type: "{{instanceType}}"
-        wait: true
-        exact_count: 1
-        vpc_subnet_id: "{{ private_subnet_2 }}"
-        assign_public_ip: no
-        keypair: 'dios-mio'
-        volumes:
-          - device_name: /dev/xvda
-            volume_size: 20
-            delete_on_termination: false
-        count_tag:
-          Name: 'ftmio{{clusterid}}04-law1b-eu-{{env}}'
-        instance_tags:
-          Name: "ftmio{{clusterid}}04-law1b-eu-{{env}}"
-          environment: "{{env}}"
-          ipCode: "{{ipcode}}"
-          systemCode: "{{systemCode}}"
-          description: "{{description}} Job"
-          teamDL: "{{teamDL}}"
-          stopSchedule: "nostop"
-          mio_usage: 'job'
-          cluster: '{{clusterid}}'
-
-    - name: Provision Jobs instance
-      ec2:
-        region: "{{region}}"
-        group_id:
-          - "{{security_group_id}}"
-          - "{{private_security_group_id}}"
-        image: "{{ami}}"
-        instance_type: "{{instanceType}}"
-        wait: true
-        exact_count: 1
-        vpc_subnet_id: "{{ private_subnet_1 }}"
-        assign_public_ip: no
-        keypair: 'dios-mio'
-        volumes:
-          - device_name: /dev/xvda
-            volume_size: 20
-            delete_on_termination: false
-        count_tag:
-          Name: 'ftmio{{clusterid}}05-law1c-eu-{{env}}'
-        instance_tags:
-          Name: "ftmio{{clusterid}}05-law1c-eu-{{env}}"
-          environment: "{{env}}"
-          ipCode: "{{ipcode}}"
-          systemCode: "{{systemCode}}"
-          description: "{{description}} Job"
-          teamDL: "{{teamDL}}"
-          stopSchedule: "nostop"
-          mio_usage: 'job'
-          cluster: '{{clusterid}}'
-
-    - name: Provision Index instance
-      ec2:
-        region: "{{region}}"
-        group_id:
-          - "{{security_group_id}}"
-          - "{{private_security_group_id}}"
-        image: "{{ami}}"
-        instance_type: "{{instanceType}}"
-        wait: true
-        exact_count: 1
-        vpc_subnet_id: "{{ private_subnet_1 }}"
-        assign_public_ip: no
-        keypair: 'dios-mio'
-        volumes:
-          - device_name: /dev/xvda
-            volume_size: 20
-            delete_on_termination: false
-        count_tag:
-          Name: 'ftmio{{clusterid}}06-law1c-eu-{{env}}'
-        instance_tags:
-          Name: "ftmio{{clusterid}}06-law1c-eu-{{env}}"
-          environment: "{{env}}"
-          ipCode: "{{ipcode}}"
-          systemCode: "{{systemCode}}"
-          description: "{{description}} Index"
-          teamDL: "{{teamDL}}"
-          stopSchedule: "nostop"
-          mio_usage: 'index'
-          cluster: '{{clusterid}}'
-
     - name: Create buckets
       s3_bucket:
         name: "mio-{{item}}-{{clusterid}}"
+        region: "{{region}}"
       with_items:
         - raw
         - edit
@@ -243,3 +26,43 @@
         - edit-proxy
         - audio
         - web-video
+
+    - name: RDS Cluster
+      shell: "aws rds create-db-cluster --db-cluster-identifier mio-db-{{clusterid}}-cluster --engine aurora --master-username admin --master-user-password {{db_password}} --tags Key=name,Value=mio-db-{{clusterid}}-cluster Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{system_code}} Key=teamDl,Value={{team_dl}} Key=stopSchedule,Value=nostop"
+      ignore_errors: yes
+
+    - name: RDS Instance
+      shell: "aws rds create-db-instance --db-instance-identifier mio-db-{{clusterid}}-host --engine aurora --db-cluster-identifier mio-db-{{clusterid}}-cluster --db-instance-class db.r3.xlarge --publicly-accessible --tags Key=name,Value=mio-db-{{clusterid}}-host Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{system_code}} Key=teamDL,Value={{team_dl}} Key=stopSchedule,Value=nostop"
+      ignore_errors: yes
+
+    - name: RAW Transcoder
+      shell: "aws elastictranscoder create-pipeline --name mio-{{clusterid}}-transcoder --input-bucket mio-raw-{{clusterid}} --output-bucket mio-raw-proxy-{{clusterid}} --role {{role}}"
+      ignore_errors: yes
+
+    - name: Build storage instance
+      ec2:
+        image: "{{ami}}"
+        region: "{{region}}"
+        group_id:
+          - "{{security_group_id}}"
+          - "{{private_security_group_id}}"
+        vpc_subnet_id: "{{private_subnet_2}}"
+        assign_public_ip: no
+        wait: true
+        count: 1
+        instance_type: "{{storage_instance_type}}"
+        instance_profile_name: FT-Linux-Role
+        instance_tags:
+          Name: "ftmio{{clusterid}}01-law1b-eu-{{env}}"
+          environment: "{{env}}"
+          ipCode: "{{ipcode}}"
+          systemCode: "{{system_code}}"
+          teamDL: "{{team_dl}}"
+          stopSchedule: "nostop"
+          mio_usage: "storage"
+          cluster: "{{clusterid}}"
+          description: "{{description}} storage box"
+        user_data: |
+          #!/bin/bash
+          /usr/bin/aws s3 cp s3://ft-ce-repository/amazon-ftbase/releases/bootstrap.sh .
+          bash ./bootstrap.sh
