@@ -3,7 +3,7 @@ MAINTAINER 'jspc<james.condron@ft.com>'
 
 RUN echo "http://dl-4.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 RUN apk update
-RUN apk add --update py-pip build-base python-dev py-boto git && \
+RUN apk add --update openssh py-pip build-base python-dev py-boto git && \
     pip install awscli  paramiko PyYAML Jinja2 httplib2 && \
     apk add ruby ruby-dev ruby-io-console ruby-bundler zlib-dev xz-dev libxml2-dev libxslt-dev
 
