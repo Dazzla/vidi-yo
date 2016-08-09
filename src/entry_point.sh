@@ -15,6 +15,8 @@ set -x
 : ${SECURITY_GROUP_NAME:=ESR-Video-Test-VPC-Resources-SG}
 : ${VPC_NAME:=ESR-Video-Test-VPC}
 
+: ${OOYALA_PASSWORD:?}
+
 mkdir -p ~/.ssh
 touch ~/.ssh/known_hosts
 cat > ~/.ssh/config <<EOF
@@ -54,13 +56,13 @@ ansible-playbook -i /ansible_hosts /playbooks/instances.yml --extra-vars " \
 
 eval $(/tool/set_vars -m hosts -v "${VPC_NAME}" -c "${CLUSTER_ID}")
 
-ansible-playbook --check -vvv -i /ansible_hosts /playbooks/mio.yml --extra-vars " \
+ansible-playbook -vvv -i /ansible_hosts /playbooks/mio.yml --extra-vars " \
     clusterid=$CLUSTER_ID \
     db_host=$DB_HOST \
     db_password=$DB_PASSWORD \
     domain=$DOMAIN \
     storage_nodes=$STORAGE_NODES \
     master_nodes=$MASTER_NODES \
-    job_nodes=$JOB_NODES \
-    index_nodes=$INDEX_NODES
+    mongo_nodes=$MONGO_NODES \
+    ooyala_password=$OOYALA_PASSWORD
 "
