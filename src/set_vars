@@ -107,7 +107,7 @@ elsif mode == :hosts
   raise ArgumentError, 'Hosts mode requires cluster_name to be set with -c' if cluster.nil?
 
   File.open('/ansible_hosts', 'a') do |f|
-    %w{storage master job index}.each do |type|
+    %w{storage master elasticsearch mongo}.each do |type|
       f.puts "[#{type}]"
       hosts = a.host_lookup(cluster, type)
       hosts.each do |ip_addr|
