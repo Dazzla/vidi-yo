@@ -12,8 +12,12 @@ $ docker build -t vidyo .
 
 ## Running!
 ```bash
-$ docker docker run -ti -e CLUSTER_ID=jspc0 -v ~/secure/mnt/vault/keys:/keys -v ${PWD}/ansible:/playbooks vidyo
+$ docker docker run -ti -e OOYALA_PASSWORD=somethig CLUSTER_ID=jspc0 -v ~/secure/mnt/vault/keys:/keys -v ${PWD}/ansible:/playbooks vidyo
 ```
+
+**Note:**
+
+`OOYALA_PASSWORD` is the password docker uses to connect to registry.ooflex.net for docker images. This has to be set, but having it set to something at random will still allow the vast majority of tasks. You'll still be able to restart existing containers, build clusters, etc. - you just wont be able to pull latest versions.
 
 ### Reference
 
