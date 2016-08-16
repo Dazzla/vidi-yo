@@ -7,12 +7,7 @@ RUN apk add --update openssh py-pip build-base python-dev py-boto git libffi-dev
     pip install awscli  paramiko PyYAML Jinja2 httplib2 && \
     apk add ruby ruby-dev ruby-io-console ruby-bundler zlib-dev xz-dev libxml2-dev libxslt-dev
 
-# We need bleeding ansible for aurora and shit
-
-# Stupid sexy submodules
-RUN apk add perl
-RUN pip install --upgrade git+http://github.com/ansible/ansible@devel
-RUN apk del perl
+RUN pip install ansible
 
 # Clean
 RUN rm -rf /var/cache/apk/*
