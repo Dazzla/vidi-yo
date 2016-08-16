@@ -28,7 +28,7 @@
         - web-video
 
     - name: RDS Cluster
-      shell: "aws rds create-db-cluster --db-cluster-identifier mio-db-{{clusterid}}-cluster --engine aurora --master-username admin --master-user-password {{db_password}} --tags Key=name,Value=mio-db-{{clusterid}}-cluster Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{system_code}} Key=teamDl,Value={{team_dl}} Key=stopSchedule,Value=nostop --vpc-security-group-ids {{private_security_group_id}} --db-subnet-group-name private-subnets"
+      shell: "aws rds create-db-cluster --db-cluster-identifier mio-db-{{clusterid}}-cluster --engine aurora --master-username {{db_username}} --master-user-password {{db_password}} --tags Key=name,Value=mio-db-{{clusterid}}-cluster Key=environment,Value={{env}} Key=ipCode,Value={{ipcode}} Key=systemCode,Value={{system_code}} Key=teamDl,Value={{team_dl}} Key=stopSchedule,Value=nostop --vpc-security-group-ids {{private_security_group_id}} --db-subnet-group-name private-subnets"
       ignore_errors: yes
 
     - name: RDS Instance
