@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+
+$:<< './lib'
+require 'consul'
+
+def get key
+  ENV.fetch(key)
+end
+
+keypairs = []
+
+keypairs << Consul::KV.new{|c| c.value = get('DB_DATABASE'); c.key = 'flex-enterprise/mysql/database' }
+keypairs << Consul::KV.new{|c| c.value = get('DB_DATABASE'); c.key = 'mysql/database' }
+keypairs << Consul::KV.new{|c| c.value = get('DB_HOST'); c.key = 'mysql/host' }
+keypairs << Consul::KV.new{|c| c.value = get('DB_PASSWORD'); c.key = 'mysql/password' }
+keypairs << Consul::KV.new{|c| c.value = get('DB_USERNAME'); c.key = 'mysql/username' }
+keypairs << Consul::KV.new{|c| c.value = get('ELASTICSEARCH_CLUSTERNAME'); c.key = 'elasticsearch/clusterName' }
+keypairs << Consul::KV.new{|c| c.value = get('ELASTICSEARCH_NODES'); c.key = 'elasticsearch/clusterNodes' }
+keypairs << Consul::KV.new{|c| c.value = get('MASTERUSER_PASSWORD'); c.key = 'flex-enterprise/api/password' }
+keypairs << Consul::KV.new{|c| c.value = get('MONGO_DATABASE'); c.key = 'mongo/database' }
+keypairs << Consul::KV.new{|c| c.value = get('MONGO_NODES'); c.key = 'mongo/hosts' }
+keypairs << Consul::KV.new{|c| c.value = get('MONGO_PASSWORD'); c.key = 'mongo/password' }
+keypairs << Consul::KV.new{|c| c.value = get('MONGO_REPLICASET'); c.key = 'mongo/replicaSet'}
+keypairs << Consul::KV.new{|c| c.value = get('MONGO_USERNAME'); c.key = 'mongo/username' }
+keypairs << Consul::KV.new{|c| c.value = get('RABBIT_HOST'); c.key = 'rabbitmq/addresses' }
+keypairs << Consul::KV.new{|c| c.value = get('RABBIT_PASSWORD'); c.key = 'rabbitmq/password' }
+keypairs << Consul::KV.new{|c| c.value = get('RABBIT_USERNAME'); c.key = 'rabbitmq/username' }
+keypairs << Consul::KV.new{|c| c.value = get('RABBIT_VHOST'); c.key = 'rabbitmq/virtualHost' }
+keypairs << Consul::KV.new{|c| c.value = get('SMTP_REPLAY'); c.key = 'smtp/host' }
+
+Consul.new do |c|
+  c.cluster_id = get('CLUSTER_ID')
+  c.key_values = keypairs
+  c.url = get('CONSUL_URL')
+end.update
