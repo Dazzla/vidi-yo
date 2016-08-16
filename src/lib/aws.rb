@@ -5,20 +5,20 @@ class AWS
   def initialize access_key, secret_key, region, vpc_name, role_name, cluster_name=nil
     @compute = Fog::Compute.new(
       provider: 'AWS',
-      aws_access_key_id: ACCESS_KEY,
-      aws_secret_access_key: SECRET_KEY,
-      region: REGION
+      aws_access_key_id: access_key,
+      aws_secret_access_key: secret_key,
+      region: region
     )
 
     @iam = Fog::AWS::IAM.new(
-      aws_access_key_id: ACCESS_KEY,
-      aws_secret_access_key: SECRET_KEY
+      aws_access_key_id: access_key,
+      aws_secret_access_key: secret_key
     )
 
     @rds = Fog::AWS::RDS.new(
-      aws_access_key_id: ACCESS_KEY,
-      aws_secret_access_key: SECRET_KEY,
-      region: REGION
+      aws_access_key_id: access_key,
+      aws_secret_access_key: secret_key,
+      region: region
     )
 
     @role_name = role_name
