@@ -79,10 +79,13 @@ class Consul
     # This is hack city
     base = "flex-#{@cluster_id}.ft.com"
 
-    put('flex/enterprise/domainName', "master.#{base}")
-    put('flex/flex-matadatadesigner-app/url', "https://metadata.#{base}/metadata/a/%account")
-    put('flex/enterprise/api/url', "https://master.#{base}/api")
-    put('flex/enterprise/consoleUrl', "https://master.#{base}/")
+    put('flex/enterprise/domainName', "master-#{base}")
+    put('flex/flex-metadatadesigner-app/url', "https://metadata-#{base}/metadata/a/%account")
+    put('flex/mio-workflowdesigner-app/url', "https://workflow-#{base}/metadata/a/%account")
+    put('flex/enterprise/api/url', "https://master-#{base}/api")
+    put('flex/shared/flex-enterprise/api/url', "https://master-#{base}/api")
+    put('flex/shared/flex-enterprise/consoleUrl', "https://master-#{base}/api")
+    put('flex/enterprise/consoleUrl', "https://master-#{base}/")
   end
 
   def push_key_values
