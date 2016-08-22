@@ -3,7 +3,7 @@ require 'securerandom'
 
 class Consul
   class KV
-    ENTERPRISE = %w(masterIPs jobIPs mysql/database)
+    ENTERPRISE = %w(masterIPs jobIPs mysql/database api/username)
     PREFIX = 'flex'
 
     def initialize
@@ -64,7 +64,7 @@ class Consul
   end
 
   def auth
-    k = 'flex/mio-auth-service/tokenSecret'
+    k = 'flex/flex-authentication-service/tokenSecret'
 
     # Override the above, don't want to keep replacing this,
     # Nor do I want to keep outputting session token secrets
@@ -81,7 +81,7 @@ class Consul
 
     put('flex/enterprise/domainName', "master-#{base}")
     put('flex/flex-metadatadesigner-app/url', "https://metadata-#{base}/metadata/a/%account")
-    put('flex/mio-workflowdesigner-app/url', "https://workflow-#{base}/metadata/a/%account")
+    put('flex/flex-workflowdesigner-app/url', "https://workflow-#{base}/workflow/a/%account")
     put('flex/enterprise/api/url', "https://master-#{base}/api")
     put('flex/shared/flex-enterprise/api/url', "https://master-#{base}/api")
     put('flex/shared/flex-enterprise/consoleUrl', "https://master-#{base}/api")

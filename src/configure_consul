@@ -9,6 +9,7 @@ end
 
 keypairs = []
 
+keypairs << Consul::KV.new{|c| c.value = 'master'; c.key = 'api/username' }
 keypairs << Consul::KV.new{|c| c.value = get('DB_DATABASE'); c.key = 'flex-enterprise/mysql/database' }
 keypairs << Consul::KV.new{|c| c.value = get('DB_DATABASE'); c.key = 'mysql/database' }
 keypairs << Consul::KV.new{|c| c.value = get('DB_HOST'); c.key = 'mysql/host' }
