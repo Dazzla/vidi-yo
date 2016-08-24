@@ -1,2 +1,2 @@
-ansible/*.retry
+ansible/**/*.retry
 coverage/
