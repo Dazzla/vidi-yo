@@ -15,9 +15,9 @@ fi
 
 : ${AMI:=ami-31328842}
 : ${CONSUL:=localhost:8500}
-: ${DB_DATABASE:=master}
-: ${DB_PASSWORD:=iamsoVERYsmart}
-: ${DB_USERNAME:=admin}
+: ${DB_MASTERPASSWORD:=iamsoVERYsmart}
+: ${DB_MASTERUSERNAME:=admin}
+: ${DB_PASSWORD:=somethingsensible}
 : ${DOMAIN:=master.dev.nativ-systems.com}
 : ${ELASTICSEARCH_CLUSTERNAME:=elasticsearch}
 : ${ENV:=t}
@@ -40,6 +40,9 @@ fi
 [ -f /.env ] && source /.env
 
 : ${OOYALA_PASSWORD:?}
+
+export DB_DATABASE=master_${CLUSTER_ID}
+export DB_USERNAME=${CLUSTER_ID}
 
 mkdir -p ~/.ssh
 touch ~/.ssh/known_hosts
@@ -69,6 +72,8 @@ if [[ "${BUILDOUT}" = 'build' ]]; then
       db_database=$DB_DATABASE \
       db_password=$DB_PASSWORD \
       db_username=$DB_USERNAME \
+      db_masterusername=$DB_MASTERUSERNAME \
+      db_masterpassword=$DB_MASTERPASSWORD \
       env=$ENV \
       ipcode=$IPCODE \
       private_security_group_id=$PRIVATE_SECURITY_GROUP_ID \
@@ -89,6 +94,10 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
     ansible-playbook -vvv -i /ansible_hosts "/playbooks/${MODE}/software.yml" --extra-vars " \
       clusterid=$CLUSTER_ID \
       consul=$CONSUL \
+      db_host=$DB_HOST \
+      db_masterusername=$DB_MASTERUSERNAME \
+      db_masterpassword=$DB_MASTERPASSWORD \
+      db_password=$DB_PASSWORD \
       domain=$DOMAIN \
       elasticsearch_nodes=$ELASTICSEARCH_NODES \
       mongo_nodes=$MONGO_NODES \
