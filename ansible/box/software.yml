@@ -1,0 +1,226 @@
+- hosts: storage
+  become: yes
+  vars:
+    clusterid: test
+
+  tasks:
+    - name: create export dirs
+      file:
+        path: "/{{clusterid}}/{{item}}"
+        state: directory
+        mode: 0755
+        recurse: yes
+      with_items:
+        - u01
+        - u02
+
+    - name: export dirs
+      lineinfile:
+        dest: /etc/exports
+        create: yes
+        line: "/{{clusterid}}/{{item}} *(rw,no_root_squash,sync)"
+      with_items:
+        - u01
+        - u02
+
+    - name: exportfs
+      shell: exportfs -a
+
+- hosts:
+  - master
+  become: yes
+  vars:
+    clusterid: test
+
+  tasks:
+    - name: install nfs client
+      yum:
+        name: nfs-utils
+        state: latest
+
+    - name: create /stuff
+      file:
+        path: /stuff
+        state: directory
+        mode: 0755
+
+
+    - name: mount storage u01
+      mount:
+        fstype: nfs4
+        src: "{{ hostvars[groups['storage'][0]]['ansible_eth0']['ipv4']['address'] }}:/{{clusterid}}/u01"
+        name: /stuff
+        state: mounted
+
+    - name: hosts file magic
+      shell: "echo -e $(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')\t\t$(hostname) >> /etc/hosts"
+
+- hosts:
+  - elasticsearch
+  become: yes
+  tasks:
+    - name: create es user
+      user:
+        name: elasticsearch
+
+    - name: create es yum repo
+      yum_repository:
+        name: es
+        description: es
+        baseurl: https://packages.elastic.co/elasticsearch/1.7/centos
+        gpgcheck: yes
+        gpgkey: https://packages.elastic.co/GPG-KEY-elasticsearch
+
+    - name: install es
+      yum:
+        name: elasticsearch
+        state: latest
+
+    - name: bump java
+      yum:
+        name: java-1.8.0
+        state: latest
+
+    - name: set java alternatives
+      shell: alternatives --set java /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/java
+
+    - name: add cluster hosts
+      lineinfile:
+        dest: /etc/elasticsearch/elasticsearch.yml
+        line: "discovery.zen.ping.unicast.hosts: ['{{hostvars[groups['elasticsearch'][0]]['ansible_eth0']['ipv4']['address']}}'"
+
+    - name: set listen addr
+      lineinfile:
+        dest: /etc/elasticsearch/elasticsearch.yml
+        line: "network.host: 0.0.0.0"
+
+    - name: set listen addr
+      lineinfile:
+        dest: /etc/elasticsearch/elasticsearch.yml
+        line: "discovery.zen.minimum_master_nodes: 1"
+
+    - name: enable es
+      service:
+        name: elasticsearch
+        state: started
+        enabled: yes
+
+- hosts:
+  - master
+  become: yes
+  vars:
+    ooyala_password: something
+  tasks:
+    - name: fix path
+      lineinfile:
+        dest: /etc/profile
+        create: yes
+        line: "export PATH=/usr/local/bin:$PATH"
+
+    - name: install docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: enable docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: install pip deps
+      pip:
+        name: "{{item}}"
+#        executable: /usr/local/bin/pip
+      with_items:
+        - docker-py
+        - docker-compose
+
+    - name: login to ooyala repo
+      docker_login:
+        username: ft
+        password: "{{ooyala_password}}"
+        registry: registry.ooflex.net
+
+    - name: start consul container
+      docker_container:
+        name: consul
+        image: registry.ooflex.net/consul:latest
+        published_ports:
+          - "8300:8300"
+          - "8301:8301"
+          - "8301:8301/udp"
+          - "8302:8302"
+          - "8400:8400"
+          - "8500:8500"
+          - "53:8600/udp"
+        env:
+          IP: 172.17.0.1
+          SERVICE_IGNORE: true
+        volumes:
+          - /stuff/consul:/flex/consul
+
+    - name: configure database
+      docker_container:
+        name: flex-data
+        image: quay.io/financialtimes/flex-data
+        env:
+          DB_HOST: "{{db_host}}"
+          DB_MASTERUSERNAME: "{{db_masterusername}}"
+          DB_MASTERPASSWORD: "{{db_masterpassword}}"
+          DB_PASSWORD: "{{db_password}}"
+          CLUSTER_ID: "{{clusterid}}"
+
+- hosts: localhost
+  connection: local
+  vars:
+    consul: localhost:8500
+    clusterid: test
+    domain: "flex-{{clusterid}}.ft.com"
+
+  tasks:
+    - name: configure consul stuff
+      shell: /tool/configure_consul
+
+- hosts:
+  - master
+  become: yes
+  vars:
+    consul: localhost:8500
+    clusterid: test
+    domain: "flex-{{clusterid}}.ft.com"
+  tasks:
+    - name: template compose file
+      template:
+        src: ../../templates/docker-compose.yml
+        dest: /root/docker-compose.yml
+
+# Seriously... what the shit?
+
+    - name: docker-compose pull down
+      shell: curl -L https://github.com/docker/compose/releases/download/1.8.0/docker-compose-`uname -s`-`uname -m` > /usr/bin/docker-compose
+
+    - name: make executable
+      shell: chmod +x /usr/bin/docker-compose
+
+    - name: start containers
+      shell: docker-compose -f /root/docker-compose.yml up -d
+
+    - name: start registrator
+      docker_container:
+        name: registrator
+        image: registry.ooflex.net/registrator
+        volumes:
+          - /var/run/docker.sock:/tmp/docker.sock
+        env:
+          IP: 172.17.0.1
+
+    - name: start annihilator
+      docker_container:
+        name: annihilator
+        image: quay.io/financialtimes/annihilator
+        published_ports:
+          "80:80"
+        env:
+          SLEEP: 10
+          CONSUL: "{{consul}}"
