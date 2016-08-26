@@ -74,12 +74,39 @@
         baseurl: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.2/x86_64/
         gpgcheck: yes
         gpgkey: https://www.mongodb.org/static/pgp/server-3.2.asc
+
     - name: install mongo
       yum:
         name: mongodb-org
         state: latest
+
+    - name: create pre-auth mongo config
+      template:
+        src: ../../templates/mongo/mongod_preauth.conf
+        dest: /etc/mongod.conf
+
     - name: enable mongo
       service:
         name: mongod
         state: started
+        enabled: yes
+
+    - name: generate mongo config.js
+      template:
+        src: ../../templates/mongo-config.js
+        dest: /tmp/mongo-config.js
+
+    - name: create admin account
+      shell: mongo admin /tmp/mongo-config.js
+      ignore_errors: yes
+
+    - name: create auth-enabled mongo config
+      template:
+        src: ../../templates/mongo/mongod_preauth.conf
+        dest: /etc/mongod.conf
+
+    - name: bounce mongo
+      service:
+        name: mongod
+        state: restarted
         enabled: yes
