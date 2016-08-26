@@ -167,9 +167,12 @@
         env:
           DB_HOST: "{{db_host}}"
           DB_MASTERUSERNAME: "{{db_masterusername}}"
+          MONGO_MASTERUSERNAME: "{{ mongo_masterusername }}"
           DB_MASTERPASSWORD: "{{db_masterpassword}}"
+          MONGO_MASTERPASSWORD: "{{ mongo_masterpassword }}"
           DB_PASSWORD: "{{db_password}}"
           CLUSTER_ID: "{{clusterid}}"
+          MONGO_HOST: "{{ single_mongo_host }}"
 
 - hosts: localhost
   connection: local
