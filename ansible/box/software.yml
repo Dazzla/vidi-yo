@@ -131,7 +131,6 @@
     - name: install pip deps
       pip:
         name: "{{item}}"
-#        executable: /usr/local/bin/pip
       with_items:
         - docker-py
         - docker-compose
