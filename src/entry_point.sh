@@ -24,9 +24,8 @@ fi
 : ${IPCODE:=P386}
 : ${MASTERUSER_PASSWORD:=masteruser}
 : ${MONGO_DATABASE:=flex}
-: ${MONGO_PASSWORD:=PlainTextYo!}
+: ${MONGO_MASTERUSERNAME:=admin}
 : ${MONGO_REPLICASET:=''}
-: ${MONGO_USERNAME:=flex_user}
 : ${RABBIT_HOST:=localhost}
 : ${RABBIT_PASSWORD:=flex}
 : ${RABBIT_USERNAME:=flex}
@@ -41,8 +40,11 @@ fi
 
 : ${OOYALA_PASSWORD:?}
 
-export DB_DATABASE=master_${CLUSTER_ID}
+export DB_DATABASE=${CLUSTER_ID}_master
 export DB_USERNAME=${CLUSTER_ID}
+export MONGO_DATABASE=${CLUSTER_ID}
+export MONGO_USERNAME=${CLUSTER_ID}
+export MONGO_PASSWORD=${DB_PASSWORD}
 
 mkdir -p ~/.ssh
 touch ~/.ssh/known_hosts
@@ -98,9 +100,12 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
       db_masterusername=$DB_MASTERUSERNAME \
       db_masterpassword=$DB_MASTERPASSWORD \
       db_password=$DB_PASSWORD \
+      mongo_masterusername=$MONGO_MASTERUSERNAME \
+      mongo_masterpassword=$MONGO_MASTERPASSWORD \
       domain=$DOMAIN \
       elasticsearch_nodes=$ELASTICSEARCH_NODES \
       mongo_nodes=$MONGO_NODES \
+      single_mongo_host=$(echo ${MONGO_NODES} | awk -F, '{print $1}') \
       ooyala_password=$OOYALA_PASSWORD \
       storage_nodes=$STORAGE_NODES
     "

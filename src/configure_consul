@@ -9,7 +9,9 @@ end
 
 keypairs = []
 
-keypairs << Consul::KV.new{|c| c.value = 'master'; c.key = 'api/username' }
+keypairs << Consul::KV.new{|c| c.value = 'masteruser'; c.key = 'api/username' }
+keypairs << Consul::KV.new{|c| c.value = 'masteruser'; c.key = 'flex-enterprise/api/username' }
+
 keypairs << Consul::KV.new{|c| c.value = get('DB_DATABASE'); c.key = 'flex-enterprise/mysql/database' }
 keypairs << Consul::KV.new{|c| c.value = get('DB_DATABASE'); c.key = 'mysql/database' }
 keypairs << Consul::KV.new{|c| c.value = get('DB_HOST'); c.key = 'mysql/host' }
@@ -27,6 +29,8 @@ keypairs << Consul::KV.new{|c| c.value = get('RABBIT_HOST'); c.key = 'rabbitmq/a
 keypairs << Consul::KV.new{|c| c.value = get('RABBIT_PASSWORD'); c.key = 'rabbitmq/password' }
 keypairs << Consul::KV.new{|c| c.value = get('RABBIT_USERNAME'); c.key = 'rabbitmq/username' }
 keypairs << Consul::KV.new{|c| c.value = get('RABBIT_VHOST'); c.key = 'rabbitmq/virtualHost' }
+keypairs << Consul::KV.new{|c| c.value = get('REDIS_DATABASE'); c.key = 'redis/database' }
+keypairs << Consul::KV.new{|c| c.value = get('REDIS_HOST'); c.key = 'redis/host' }
 keypairs << Consul::KV.new{|c| c.value = get('SMTP_REPLAY'); c.key = 'smtp/host' }
 
 Consul.new do |c|
