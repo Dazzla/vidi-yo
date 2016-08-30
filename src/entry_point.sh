@@ -100,6 +100,7 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
       db_masterusername=$DB_MASTERUSERNAME \
       db_masterpassword=$DB_MASTERPASSWORD \
       db_password=$DB_PASSWORD \
+      ipcode=$IPCODE \
       mongo_masterusername=$MONGO_MASTERUSERNAME \
       mongo_masterpassword=$MONGO_MASTERPASSWORD \
       domain=$DOMAIN \
