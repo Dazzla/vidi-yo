@@ -19,6 +19,7 @@ keypairs << Consul::KV.new{|c| c.value = get('DB_PASSWORD'); c.key = 'mysql/pass
 keypairs << Consul::KV.new{|c| c.value = get('DB_USERNAME'); c.key = 'mysql/username' }
 keypairs << Consul::KV.new{|c| c.value = get('ELASTICSEARCH_CLUSTERNAME'); c.key = 'elasticsearch/clusterName' }
 keypairs << Consul::KV.new{|c| c.value = get('ELASTICSEARCH_NODES'); c.key = 'elasticsearch/clusterNodes' }
+keypairs << Consul::KV.new{|c| c.value = get('CLUSTER_ID'); c.key = 'elasticsearch/indexPrefix' }
 keypairs << Consul::KV.new{|c| c.value = get('MASTERUSER_PASSWORD'); c.key = 'flex-enterprise/api/password' }
 keypairs << Consul::KV.new{|c| c.value = get('MONGO_DATABASE'); c.key = 'mongo/database' }
 keypairs << Consul::KV.new{|c| c.value = get('MONGO_NODES'); c.key = 'mongo/hosts' }
