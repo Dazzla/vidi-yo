@@ -4,13 +4,14 @@ services:
   mio-base:
     image: hello-world
     extra_hosts:
-      - consul:172.17.0.1
+      - consul:{{ consul_8500 }}
     environment:
       - SERVICE_IGNORE=true
       - SPRING_PROFILES_ACTIVE=server
       - HEAPSPACE=384m
       - APP_COMMAND_LINE=--spring.cloud.consul.discovery.prefer-agent-address=true
       - WAIT=15
+      - APP_COMMAND_LINE=--hazelcast.publicIp={{ ansible_default_ipv4.address }}
     hostname:  {{ domain }}
 
   auth-service:
@@ -73,7 +74,8 @@ services:
   master:
     image: registry.ooflex.net/flex-master
     environment:
-      - IP=10.170.29.170
+      - APP_COMMAND_LINE=--hazelcast.publicIp={{ ansible_default_ipv4.address }}
+      - IP={{ ansible_default_ipv4.address }}
       - WAIT=10
       - MIGRATE_DATABASE=yes #- will cause flyway to migrate the schema (instead of just validating)
     ports:
@@ -87,9 +89,10 @@ services:
       - 5445:5445
       - 4447:4447
       - 4712:4712
+      - 5701:5701
     volumes:
       - /stuff/mio-enterprise/logs:/opt/jboss-eap-6.3/standalone/log
       - /stuff/mio-enterprise/storage:/flex/flex-enterprise/storage
     extra_hosts:
-      - consul:172.17.0.1
+      - consul:{{ consul_8500 }}
     hostname: {{ domain }}
