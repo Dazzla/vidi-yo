@@ -20,6 +20,7 @@ services:
       service: mio-base
     ports:
       - "18101:18101"
+      - 5701
 
   events-service:
     image: registry.ooflex.net/flex-events-service
@@ -27,6 +28,7 @@ services:
       service: mio-base
     ports:
       - "18113:18113"
+      - 5701
 
   mam:
     image: registry.ooflex.net/flex-mam-app #:5.4.666
@@ -34,6 +36,7 @@ services:
       service: mio-base
     ports:
       - "18109:18109"
+      - 5701
 
   searchelastic:
     image: registry.ooflex.net/flex-searchelastic-service #:1.0.357
@@ -41,6 +44,7 @@ services:
       service: mio-base
     ports:
       - "18119:18119"
+      - 5701
 
   indexelastic:
     image: registry.ooflex.net/flex-indexelastic-service #:1.1.362
@@ -48,6 +52,7 @@ services:
       service: mio-base
     ports:
       - "18116:18116"
+      - 5701
 
   metadatadesigner:
     image: registry.ooflex.net/flex-metadatadesigner-app #:1.0.54
