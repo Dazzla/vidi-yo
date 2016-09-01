@@ -64,28 +64,40 @@ class Consul
   end
 
   def auth
-    k = 'flex/flex-authentication-service/tokenSecret'
-
     # Override the above, don't want to keep replacing this,
     # Nor do I want to keep outputting session token secrets
-    begin
-      Diplomat::Kv.get(k)
-    rescue Diplomat::KeyNotFound
-      Diplomat::Kv.put(k, SecureRandom.uuid)
+    put('annihilator/haproxy/username', 'haproxy')
+
+    ['flex/flex-authentication-service/tokenSecret', 'annihilator/haproxy/password'].each do |k|
+      begin
+        Diplomat::Kv.get(k)
+      rescue Diplomat::KeyNotFound
+        put(k, SecureRandom.uuid)
+      end
     end
+
   end
 
   def domain_names
     # This is hack city
     base = "flex-#{@cluster_id}.ft.com"
+    master = "master-#{base}"
+    fqdn = "https://#{master}"
+    api = "#{fqdn}/api"
 
-    put('flex/enterprise/domainName', "master-#{base}")
-    put('flex/flex-metadatadesigner-app/url', "https://metadata-#{base}/metadata/a/%account")
-    put('flex/flex-workflowdesigner-app/url', "https://workflow-#{base}/workflow/a/%account")
-    put('flex/enterprise/api/url', "https://master-#{base}/api")
-    put('flex/shared/flex-enterprise/api/url', "https://master-#{base}/api")
-    put('flex/shared/flex-enterprise/consoleUrl', "https://master-#{base}/api")
-    put('flex/enterprise/consoleUrl', "https://master-#{base}/")
+    metadata = "metadata-#{base}"
+    workflow = "workflow-#{base}"
+
+    put('flex/enterprise/domainName', master)
+    put('flex/flex-metadatadesigner-app/url', "https://#{metadata}/metadata/a/%account")
+    put('flex/flex-workflowdesigner-app/url', "https://#{workflow}/workflow/a/%account")
+    put('flex/enterprise/api/url', api)
+    put('flex/shared/flex-enterprise/api/url', api)
+    put('flex/shared/flex-enterprise/consoleUrl', api)
+    put('flex/enterprise/consoleUrl', fqdn)
+
+    put('annihilator/flex/metadata_domain', metadata)
+    put('annihilator/flex/workflow_domain', workflow)
   end
 
   def push_key_values

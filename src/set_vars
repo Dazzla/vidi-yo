@@ -63,15 +63,26 @@ elsif mode == :hosts
   aws.cluster_name = cluster
 
   File.open( File.join(root, 'ansible_hosts'), 'a') do |f|
-    %w{storage master elasticsearch mongo}.each do |type|
+    %w{storage mongo elasticsearch}.each do |type|
       f.puts "[#{type}]"
-      hosts = aws.host_lookup(type)
+      hosts = aws.infra_host_lookup(type)
       hosts.each do |ip_addr|
         f.puts "#{ip_addr} ansible_user=ec2-user ansible_ssh_private_key_file=/keys/dios-mio.pem"
       end
 
       puts "export #{type.upcase}_NODES=#{hosts.join(',')}"
     end
+
+    %w{master}.each do |type|
+      f.puts "[#{type}]"
+      hosts = aws.cluster_host_lookup(type)
+      hosts.each do |ip_addr|
+        f.puts "#{ip_addr} ansible_user=ec2-user ansible_ssh_private_key_file=/keys/dios-mio.pem"
+      end
+
+      puts "export #{type.upcase}_NODES=#{hosts.join(',')}"
+    end
+
   end
 
   db_url = aws.database_url
