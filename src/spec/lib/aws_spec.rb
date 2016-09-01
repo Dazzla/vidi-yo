@@ -5,7 +5,7 @@ describe 'AWS' do
 
   context 'when initializing' do
     [:security_group_lookup, :vpc_public_subnets, :vpc_private_subnets,
-     :host_lookup, :role_lookup, :database_url].each do |m|
+     :cluster_host_lookup, :infra_host_lookup, :role_lookup, :database_url].each do |m|
       it { expect(aws_connection).to respond_to(m) }
     end
 
