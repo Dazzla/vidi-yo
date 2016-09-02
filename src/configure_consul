@@ -22,7 +22,7 @@ keypairs << Consul::KV.new{|c| c.value = get('ELASTICSEARCH_NODES'); c.key = 'el
 keypairs << Consul::KV.new{|c| c.value = get('CLUSTER_ID'); c.key = 'elasticsearch/indexPrefix' }
 keypairs << Consul::KV.new{|c| c.value = get('MASTERUSER_PASSWORD'); c.key = 'flex-enterprise/api/password' }
 keypairs << Consul::KV.new{|c| c.value = get('MONGO_DATABASE'); c.key = 'mongo/database' }
-keypairs << Consul::KV.new{|c| c.value = get('MONGO_NODES'); c.key = 'mongo/hosts' }
+keypairs << Consul::KV.new{|c| c.value = get('MONGO_ROUTER_NODES'); c.key = 'mongo/hosts' }
 keypairs << Consul::KV.new{|c| c.value = get('MONGO_PASSWORD'); c.key = 'mongo/password' }
 keypairs << Consul::KV.new{|c| c.value = get('MONGO_REPLICASET'); c.key = 'mongo/replicaSet'}
 keypairs << Consul::KV.new{|c| c.value = get('MONGO_USERNAME'); c.key = 'mongo/username' }

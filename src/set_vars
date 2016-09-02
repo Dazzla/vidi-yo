@@ -63,7 +63,7 @@ elsif mode == :hosts
   aws.cluster_name = cluster
 
   File.open( File.join(root, 'ansible_hosts'), 'a') do |f|
-    %w{storage mongo elasticsearch}.each do |type|
+    %w{storage mongo elasticsearch mongo_config mongo_router mongo_shard}.each do |type|
       f.puts "[#{type}]"
       hosts = aws.infra_host_lookup(type)
       hosts.each do |ip_addr|
