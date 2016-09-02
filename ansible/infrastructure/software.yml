@@ -64,7 +64,9 @@
         enabled: yes
 
 - hosts:
-  - mongo
+  - mongo_config
+  - mongo_router
+  - mongo_shard
   become: yes
   tasks:
     - name: mongo repo
@@ -80,6 +82,53 @@
         name: mongodb-org
         state: latest
 
+- hosts: mongo_config
+  become: yes
+  vars:
+    app_name: mongo_config
+    cmd: mongod --configsvr --dbpath /opt/mongo/metadata --port 27019
+  tasks:
+    - name: create metadata directory
+      file:
+        path: /opt/mongo/metadata
+        state: directory
+        mode: 0755
+        recurse: yes
+
+    - name: template init script # yeppp
+      template:
+        src: ../../templates/mongo/mongo-cluster-service
+        dest: /etc/init.d/mongo-cluster-service
+        mode: 0750
+
+    - name: start config servers
+      service:
+        name: mongo-cluster-service
+        state: started
+        enabled: yes
+
+- hosts: mongo_router
+  become: yes
+  vars:
+    app_name: mongo_router
+    cmd: mongos --configdb {{ mongo_config_nodes }}
+  tasks:
+    - name: template init script # yeppp
+      template:
+        src: ../../templates/mongo/mongo-cluster-service
+        dest: /etc/init.d/mongo-cluster-service
+        mode: 0750
+
+  - name: start config servers
+      service:
+        name: mongo-cluster-service
+        state: started
+        enabled: yes
+
+
+- hosts: mongo_shard
+  become: yes
+  tasks:
     - name: create pre-auth mongo config
       template:
         src: ../../templates/mongo/mongod_preauth.conf
