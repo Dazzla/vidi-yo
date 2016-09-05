@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# chkconfig: 345 99 01
+# description: some startup script
+
 
 PID_FILE=/var/run/{{ app_name }}.pid
 LOG_FILE=/var/log/{{ app_name }}.log
