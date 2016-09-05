@@ -25,6 +25,7 @@ fi
 : ${MASTERUSER_PASSWORD:=masteruser}
 : ${MONGO_DATABASE:=flex}
 : ${MONGO_MASTERUSERNAME:=admin}
+: ${MONGO_MASTERPASSWORD:=iamsoVERYsmart}
 : ${MONGO_REPLICASET:=''}
 : ${RABBIT_HOST:=localhost}
 : ${RABBIT_PASSWORD:=flex}
@@ -93,7 +94,7 @@ if [[ "${BUILDOUT}" = 'build' ]]; then
 elif [[ "${BUILDOUT}" = 'install' ]]; then
     eval $(/tool/set_vars -m hosts -v "${VPC_NAME}" -c "${CLUSTER_ID}" )
 
-    ansible-playbook -vvv -i /ansible_hosts "/playbooks/${MODE}/software.yml" --extra-vars " \
+    ansible-playbook -i /ansible_hosts "/playbooks/${MODE}/software.yml" --extra-vars " \
       clusterid=$CLUSTER_ID \
       consul=$CONSUL \
       db_host=$DB_HOST \
@@ -107,7 +108,8 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
       elasticsearch_nodes=$ELASTICSEARCH_NODES \
       mongo_config_nodes=$MONGO_CONFIG_NODES \
       mongo_router_nodes=$MONGO_ROUTER_NODES \
-      single_mongo_host=$(echo ${MONGO_NODES} | awk -F, '{print $1}') \
+      mongo_shard_nodes=$MONGO_SHARD_NODES \
+      single_mongo_host=$(echo ${MONGO_ROUTER_NODES} | awk -F, '{print $1}') \
       ooyala_password=$OOYALA_PASSWORD \
       storage_nodes=$STORAGE_NODES
     "
