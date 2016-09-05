@@ -37,5 +37,5 @@ keypairs << Consul::KV.new{|c| c.value = get('SMTP_REPLAY'); c.key = 'smtp/host'
 Consul.new do |c|
   c.cluster_id = get('CLUSTER_ID')
   c.key_values = keypairs
-  c.url = "http://#{get('CONSUL')}"
+  c.url = "#{get('CONSUL')}"
 end.update
