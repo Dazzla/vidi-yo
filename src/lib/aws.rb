@@ -45,7 +45,7 @@ class AWS
   end
 
   def infra_host_lookup type, cluster='infra'
-    @compute.servers.map{|s| s.private_ip_address if s.tags['cluster'] == @cluster_name and s.tags['flex_usage'] == type}.compact
+    @compute.servers.map{|s| s.private_ip_address if s.tags['cluster'] == cluster and s.tags['flex_usage'] == type}.compact
   end
 
   def role_lookup
