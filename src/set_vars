@@ -73,7 +73,7 @@ elsif mode == :hosts
       puts "export #{type.upcase}_NODES=#{hosts.join(',')}"
     end
 
-    %w{master}.each do |type|
+    %w{master job service router consul}.each do |type|
       f.puts "[#{type}]"
       hosts = aws.cluster_host_lookup(type)
       hosts.each do |ip_addr|
