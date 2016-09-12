@@ -4,7 +4,7 @@ services:
   mio-base:
     image: hello-world
     extra_hosts:
-      - consul:{{ consul_8500 }}
+      - consul:172.17.0.1
     environment:
       - SERVICE_IGNORE=true
       - SPRING_PROFILES_ACTIVE=server
@@ -99,5 +99,5 @@ services:
       - /stuff/mio-enterprise/logs:/opt/jboss-eap-6.3/standalone/log
       - /stuff/mio-enterprise/storage:/flex/flex-enterprise/storage
     extra_hosts:
-      - consul:{{ consul_8500 }}
+      - consul:172.17.0.1
     hostname: {{ domain }}
