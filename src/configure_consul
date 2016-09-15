@@ -34,8 +34,14 @@ keypairs << Consul::KV.new{|c| c.value = get('REDIS_DATABASE'); c.key = 'redis/d
 keypairs << Consul::KV.new{|c| c.value = get('REDIS_HOST'); c.key = 'redis/host' }
 keypairs << Consul::KV.new{|c| c.value = get('SMTP_REPLAY'); c.key = 'smtp/host' }
 
+if ENV.fetch('CLUSTERED', false).to_s == 'true'
+  keypairs << Consul::KV.new{|c| c.value = get('MASTER_NODES'); c.key = 'masterIPs' }
+  keypairs << Consul::KV.new{|c| c.value = get('JOB_NODES'); c.key = 'jobIPs' }
+end
+
 Consul.new do |c|
   c.cluster_id = get('CLUSTER_ID')
   c.key_values = keypairs
+  c.hosts = get('ALL_HOSTS')
   c.url = "#{get('CONSUL')}"
 end.update
