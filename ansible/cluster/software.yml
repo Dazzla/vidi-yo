@@ -1,0 +1,345 @@
+- hosts: storage
+  become: yes
+  vars:
+    clusterid: test
+
+  tasks:
+    - name: create export dirs
+      file:
+        path: "/{{clusterid}}/{{item}}"
+        state: directory
+        mode: 0755
+        recurse: yes
+      with_items:
+        - u01
+        - u02
+
+    - name: export dirs
+      lineinfile:
+        dest: /etc/exports
+        create: yes
+        line: "/{{clusterid}}/{{item}} *(rw,no_root_squash,sync)"
+      with_items:
+        - u01
+        - u02
+
+    - name: grab down jars
+      shell: aws s3 cp --recursive --region eu-west-1 "s3://com.ft.video.artefacts/jars/{{ jar_version }}/" .
+      args:
+        chdir: "/{{clusterid}}/u01"
+
+    - name: exportfs
+      shell: exportfs -a
+
+- hosts:
+  - master
+  - job
+  - service
+  become: yes
+  vars:
+    clusterid: staging
+
+  tasks:
+    - name: install nfs client
+      yum:
+        name: nfs-utils
+        state: latest
+
+    - name: create /stuff
+      file:
+        path: /stuff
+        state: directory
+        mode: 0755
+
+
+    - name: mount storage u01
+      mount:
+        fstype: nfs4
+        src: "{{ hostvars[groups['storage'][0]]['ansible_eth0']['ipv4']['address'] }}:/{{clusterid}}/u01"
+        name: /stuff
+        state: mounted
+
+- hosts:
+  - master
+  - job
+  - service
+  - router
+  - consul
+  become: yes
+  vars:
+    clusterid: staging
+  tasks:
+    - name: hosts file magic
+      shell: "echo -e $(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')\t\t$(hostname) >> /etc/hosts"
+
+    - name: fix path
+      lineinfile:
+        dest: /etc/profile
+        create: yes
+        line: "export PATH=/usr/local/bin:$PATH"
+
+    - name: install docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: enable docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: install pip deps
+      pip:
+        name: "{{item}}"
+      with_items:
+        - docker-compose
+
+    - name: hard lock docker-py for ansible bug
+      pip:
+        name: docker-py
+        version: 1.9.0
+
+    - name: login to ooyala repo
+      docker_login:
+        username: ft
+        password: "{{ooyala_password}}"
+        registry: registry.ooflex.net
+
+- hosts:
+  - consul
+  become: yes
+  tasks:
+    # I hate myself and I want to die
+    - name: configure consul one
+      shell: "[[ $(ip addr | grep -s {{consul_node_one}}) ]] && (echo {{consul_node_two}} > /.consul_join_address) || true"
+
+    - name: configure consul two
+      shell: "[[ $(ip addr | grep -s {{consul_node_two}}) ]] && (echo {{consul_node_three}} > /.consul_join_address) || true"
+
+    - name: configure consul three
+      shell: "[[ $(ip addr | grep -s {{consul_node_three}}) ]] && (echo {{consul_node_one}} > /.consul_join_address) || true"
+
+    - name: create consul dirs
+      file:
+        path: /stuff/consul
+        state: directory
+        recurse: yes
+        mode: 0777
+
+    # We can't use docker_container here because we need to interpolate some addresses and docker-py doesn't
+    # have anything that'll do that.
+    #
+    # The interpolation is because consul needs handholding when starting; it needs host specific args
+    - name: start consul server
+      shell: docker run -d  -p 53:8600/udp --name consul --net=host consul agent -server -bind="{{ ansible_default_ipv4.address }}" -retry-join="$(cat /.consul_join_address)" -bootstrap-expect=3 -log-level=debug -ui
+      ignore_errors: yes
+
+    - name: start monitoreador
+      docker_container:
+        name: monitoreador
+        image: quay.io/financialtimes/monitoreador
+        published_ports:
+          "8000:8000"
+        volumes:
+          - /var/tmp/control:/var/tmp/control:ro
+        env:
+          SYSTEM_CODE: "{{ ipcode }}"
+          SYSTEM_NAME: "consul cluster member"
+          SYSTEM_DESCRIPTION: "consul server cluste rmember node for flex {{clusterid}}"
+          CONTROL_DIR: /var/tmp/control
+
+
+    - name: start annihilator
+      docker_container:
+        name: annihilator
+        image: quay.io/financialtimes/annihilator
+        network_mode: host
+        env:
+          SLEEP: 10
+          MODE: consul
+
+- hosts:
+  - service   # Since there is just a single one at moment
+  become: yes
+  vars:
+    clusterid: staging
+  tasks:
+    - name: configure database
+      docker_container:
+        name: flex-data
+        image: quay.io/financialtimes/flex-data
+        env:
+          DB_HOST: "{{db_host}}"
+          DB_MASTERUSERNAME: "{{db_masterusername}}"
+          MONGO_MASTERUSERNAME: "{{ mongo_masterusername }}"
+          DB_MASTERPASSWORD: "{{db_masterpassword}}"
+          MONGO_MASTERPASSWORD: "{{ mongo_masterpassword }}"
+          DB_PASSWORD: "{{db_password}}"
+          CLUSTER_ID: "{{clusterid}}"
+          MONGO_HOST: "{{ single_mongo_host }}"
+
+- hosts: localhost
+  connection: local
+  vars:
+    consul: localhost:8500
+    clusterid: test
+    domain: "flex-{{clusterid}}.ft.com"
+
+  tasks:
+    - name: configure consul stuff
+      shell: /tool/configure_consul
+
+- hosts:
+  - master
+  - job
+  - service
+  - router
+  become: yes
+  vars:
+    consul: "consul-flex-{{clusterid}}.ft.com"
+    clusterid: test
+    domain: "flex-{{clusterid}}.ft.com"
+  tasks:
+    - name: start consul agent, client mode
+      docker_container:
+        name: consul_agent
+        image: consul:latest
+        network_mode: host
+        command: "agent -client={{ ansible_default_ipv4.address }} -retry-join={{consul_node_three}} -bind={{ ansible_default_ipv4.address }}"
+
+# Seriously... what the shit?
+
+    - name: docker-compose pull down
+      shell: curl -L https://github.com/docker/compose/releases/download/1.8.0/docker-compose-`uname -s`-`uname -m` > /usr/bin/docker-compose
+
+    - name: make executable
+      shell: chmod +x /usr/bin/docker-compose
+
+    - name: start registrator
+      docker_container:
+        name: registrator
+        image: registry.ooflex.net/registrator
+        volumes:
+          - /var/run/docker.sock:/tmp/docker.sock
+        env:
+          IP: "{{ ansible_default_ipv4.address }}"
+
+# I just want to go home
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: create docker-compose
+      shell: cat 00-base.yml master*.yml > ../docker-compose.yml
+      args:
+        chdir: /playbooks/templates/docker-compose-components
+      ignore_errors: yes
+- hosts: master
+  become: yes
+  tasks:
+    - name: set monitoreador name
+      lineinfile:
+        dest: /etc/monitoreador.env
+        create: yes
+        line: "export SYSTEM_NAME='flex {{clusterid}} master node'"
+
+    - name: generate docker-compose
+      template:
+        src: ../../templates/docker-compose.yml
+        dest: /root/docker-compose.yml
+
+
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: create docker-compose
+      shell: cat 00-base.yml services*.yml > ../docker-compose.yml
+      args:
+        chdir: /playbooks/templates/docker-compose-components
+      ignore_errors: yes
+- hosts: service
+  become: yes
+  tasks:
+    - name: set monitoreador name
+      lineinfile:
+        dest: /etc/monitoreador.env
+        create: yes
+        line: "export SYSTEM_NAME='flex {{clusterid}} services node'"
+
+    - name: generate docker-compose
+      template:
+        src: ../../templates/docker-compose.yml
+        dest: /root/docker-compose.yml
+
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: create docker-compose
+      shell: cat 00-base.yml job*.yml > ../docker-compose.yml
+      args:
+        chdir: /playbooks/templates/docker-compose-components
+      ignore_errors: yes
+- hosts: job
+  become: yes
+  tasks:
+    - name: set monitoreador name
+      lineinfile:
+        dest: /etc/monitoreador.env
+        create: yes
+        line: "export SYSTEM_NAME='flex {{clusterid}} job node'"
+
+    - name: generate docker-compose
+      template:
+        src: ../../templates/docker-compose.yml
+        dest: /root/docker-compose.yml
+
+- hosts: router
+  become: yes
+  tasks:
+    - name: set monitoreador name
+      lineinfile:
+        dest: /etc/monitoreador.env
+        create: yes
+        line: "export SYSTEM_NAME='flex {{clusterid}} router'"
+
+
+- hosts:
+  - master
+  - job
+  - service
+  become: yes
+  tasks:
+    - name: start containers
+      shell: docker-compose -f /root/docker-compose.yml up -d
+      ignore_errors: yes
+
+- hosts:
+  - master
+  - job
+  - service
+  - router
+  become: yes
+  tasks:
+    - name: start monitoreador
+      docker_container:
+        name: monitoreador
+        image: quay.io/financialtimes/monitoreador
+        published_ports:
+          "8000:8000"
+        volumes:
+          - /var/tmp/control:/var/tmp/control:ro
+          - /etc/monitoreador.env:/.env:ro
+        env:
+          SYSTEM_CODE: "{{ ipcode }}"
+          SYSTEM_DESCRIPTION: "flex {{clusterid}} ec2 instance"
+          CONTROL_DIR: /var/tmp/control
+
+    - name: start annihilator
+      docker_container:
+        name: annihilator
+        image: quay.io/financialtimes/annihilator
+        published_ports:
+          "80:80"
+        env:
+          SLEEP: 30
+          CONSUL: "{{ ansible_default_ipv4.address }}:8500"
