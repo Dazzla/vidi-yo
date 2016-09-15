@@ -23,6 +23,11 @@
         - u01
         - u02
 
+    - name: grab down jars
+      shell: aws s3 cp --recursive --region eu-west-1 "s3://com.ft.video.artefacts/jars/{{ jar_version }}/" .
+      args:
+        chdir: "/{{clusterid}}/u01"
+
     - name: exportfs
       shell: exportfs -a
 
@@ -128,16 +133,25 @@
     - name: configure consul stuff
       shell: /tool/configure_consul
 
-- hosts:
-  - master
-  become: yes
-  vars:
-    consul: 172.17.0.1
-    consul_8500: 172.17.0.1
-    clusterid: test
-    domain: "flex-{{clusterid}}.ft.com"
+- hosts: localhost
+  connection: local
   tasks:
-    - name: template compose file
+    - name: create docker-compose
+      shell: cat 00-base.yml services-*.yml master-*.yml > ../docker-compose.yml
+      args:
+        chdir: /playbooks/templates/docker-compose-components
+      ignore_errors: yes
+
+- hosts: master
+  become: yes
+  tasks:
+    - name: set monitoreador name
+      lineinfile:
+        dest: /etc/monitoreador.env
+        create: yes
+        line: "export SYSTEM_NAME='flex {{clusterid}} sole node'"
+
+    - name: generate docker-compose
       template:
         src: ../../templates/docker-compose.yml
         dest: /root/docker-compose.yml
@@ -160,7 +174,7 @@
         volumes:
           - /var/run/docker.sock:/tmp/docker.sock
         env:
-          IP: 172.17.0.1
+          IP: "{{ ansible_default_ipv4.address }}"
 
     - name: start annihilator
       docker_container:
@@ -170,7 +184,7 @@
           "80:80"
         env:
           SLEEP: 10
-          CONSUL: "{{consul_8500}}:8500"
+          CONSUL: "{{ ansible_default_ipv4.address }}:8500"
 
     - name: start monitoreador
       docker_container:
