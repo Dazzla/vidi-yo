@@ -1,0 +1,11 @@
+  metadatadesigner:
+    image: registry.ooflex.net/flex-metadatadesigner-app #:1.0.54
+    extends:
+      service: mio-base
+    environment:
+      - SPRING_PROFILES_ACTIVE=server
+      - HEAPSPACE=384m
+      - APP_COMMAND_LINE=--spring.cloud.consul.discovery.prefer-agent-address=true
+    ports:
+      - "18120:18120"
+

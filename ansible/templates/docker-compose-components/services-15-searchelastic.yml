@@ -1,0 +1,8 @@
+  searchelastic:
+    image: registry.ooflex.net/flex-searchelastic-service #:1.0.357
+    extends:
+      service: mio-base
+    ports:
+      - "18119:18119"
+      - 5701
+

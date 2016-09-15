@@ -1,0 +1,9 @@
+  mam:
+    image: registry.ooflex.net/flex-mam-app #:5.4.666
+    extends:
+      service: mio-base
+    ports:
+      - "18109:18109"
+      - 5701
+
+
