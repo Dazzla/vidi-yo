@@ -15,6 +15,7 @@ fi
 
 : ${AMI:=ami-31328842}
 : ${CONSUL:=localhost:8500}
+: ${CLUSTERED:=false}
 : ${DB_MASTERPASSWORD:=iamsoVERYsmart}
 : ${DB_MASTERUSERNAME:=admin}
 : ${DB_PASSWORD:=somethingsensible}
@@ -22,6 +23,7 @@ fi
 : ${ELASTICSEARCH_CLUSTERNAME:=elasticsearch}
 : ${ENV:=t}
 : ${IPCODE:=P386}
+: ${JAR_VERSION:=latest}
 : ${MASTERUSER_PASSWORD:=masteruser}
 : ${MONGO_DATABASE:=flex}
 : ${MONGO_MASTERUSERNAME:=admin}
@@ -95,6 +97,7 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
     eval $(/tool/set_vars -m hosts -v "${VPC_NAME}" -c "${CLUSTER_ID}" )
 
     ansible-playbook -i /ansible_hosts "/playbooks/${MODE}/software.yml" --extra-vars " \
+      all_hosts=$ALL_HOSTS \
       clusterid=$CLUSTER_ID \
       consul=$CONSUL \
       db_host=$DB_HOST \
@@ -102,6 +105,9 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
       db_masterpassword=$DB_MASTERPASSWORD \
       db_password=$DB_PASSWORD \
       ipcode=$IPCODE \
+      jar_version=$JAR_VERSION \
+      job_nodes=$JOB_NODES \
+      master_nodes=$MASTER_NODES \
       mongo_masterusername=$MONGO_MASTERUSERNAME \
       mongo_masterpassword=$MONGO_MASTERPASSWORD \
       domain=$DOMAIN \
@@ -109,6 +115,9 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
       mongo_config_nodes=$MONGO_CONFIG_NODES \
       mongo_router_nodes=$MONGO_ROUTER_NODES \
       mongo_shard_nodes=$MONGO_SHARD_NODES \
+      consul_node_one=$(echo ${CONSUL_NODES} | awk -F, '{print $1}') \
+      consul_node_two=$(echo ${CONSUL_NODES} | awk -F, '{print $2}') \
+      consul_node_three=$(echo ${CONSUL_NODES} | awk -F, '{print $3}') \
       single_mongo_host=$(echo ${MONGO_ROUTER_NODES} | awk -F, '{print $1}') \
       ooyala_password=$OOYALA_PASSWORD \
       storage_nodes=$STORAGE_NODES

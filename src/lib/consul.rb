@@ -27,6 +27,7 @@ class Consul
   end
 
   attr_accessor :cluster_id,
+                :hosts,
                 :key_values,
                 :url
 
@@ -43,6 +44,7 @@ class Consul
     auth
     domain_names
     push_key_values
+    hosts
   end
 
   private
@@ -98,6 +100,10 @@ class Consul
 
     put('annihilator/flex/metadata_domain', metadata)
     put('annihilator/flex/workflow_domain', workflow)
+  end
+
+  def hosts
+    put("annihilator/haproxy/all_hosts", @hosts)
   end
 
   def push_key_values

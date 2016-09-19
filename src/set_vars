@@ -60,6 +60,8 @@ if mode == :preflight
 elsif mode == :hosts
   raise ArgumentError, 'Hosts mode requires cluster_name to be set with -c' if cluster.nil?
 
+  all_hosts = []
+
   aws.cluster_name = cluster
 
   File.open( File.join(root, 'ansible_hosts'), 'a') do |f|
@@ -73,10 +75,11 @@ elsif mode == :hosts
       puts "export #{type.upcase}_NODES=#{hosts.join(',')}"
     end
 
-    %w{master}.each do |type|
+    %w{master job service router consul}.each do |type|
       f.puts "[#{type}]"
       hosts = aws.cluster_host_lookup(type)
       hosts.each do |ip_addr|
+        all_hosts << ip_addr
         f.puts "#{ip_addr} ansible_user=ec2-user ansible_ssh_private_key_file=/keys/dios-mio.pem"
       end
 
@@ -84,6 +87,7 @@ elsif mode == :hosts
     end
 
   end
+  puts "export ALL_HOSTS=#{all_hosts.join(',')}"
 
   db_url = aws.database_url
   puts "export DB_HOST=#{db_url}"

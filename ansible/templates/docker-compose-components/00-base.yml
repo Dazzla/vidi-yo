@@ -1,0 +1,15 @@
+version: "2"
+
+services:
+  mio-base:
+    image: hello-world
+    extra_hosts:
+      - consul:{{ ansible_default_ipv4.address }}
+    environment:
+      - SERVICE_IGNORE=true
+      - SPRING_PROFILES_ACTIVE=server
+      - HEAPSPACE=384m
+      - APP_COMMAND_LINE=--spring.cloud.consul.discovery.prefer-agent-address=true
+      - WAIT=15
+      - APP_COMMAND_LINE=--hazelcast.publicIp={{ ansible_default_ipv4.address }}
+    hostname:  {{ domain }}

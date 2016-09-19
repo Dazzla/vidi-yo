@@ -1,0 +1,25 @@
+  job:
+    image: registry.ooflex.net/flex-job
+    environment:
+      - APP_COMMAND_LINE=--hazelcast.publicIp={{ ansible_default_ipv4.address }}
+      - IP={{ ansible_default_ipv4.address }}
+      - WAIT=10
+      - MIGRATE_DATABASE=yes #- will cause flyway to migrate the schema (instead of just validating)
+    ports:
+      - 20044:20044
+      - 30044:30044
+      - 9999:9999
+      - 9990:9990
+      - 7600:7600
+      - 7801:7801
+      - 57600:57600
+      - 5445:5445
+      - 4447:4447
+      - 4712:4712
+      - 5701:5701
+    volumes:
+      - /stuff/mio-enterprise/logs:/opt/jboss-eap-6.3/standalone/log
+      - /stuff/mio-enterprise/storage:/mio/mio-enterprise/storage
+    extra_hosts:
+      - consul:{{ ansible_default_ipv4.address }}
+    hostname: {{ domain }}

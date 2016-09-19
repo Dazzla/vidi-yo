@@ -1,0 +1,8 @@
+  events-service:
+    image: registry.ooflex.net/flex-events-service
+    extends:
+      service: mio-base
+    ports:
+      - "18113:18113"
+      - 5701
+
