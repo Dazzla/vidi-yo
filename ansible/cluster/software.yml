@@ -333,6 +333,8 @@
           SYSTEM_CODE: "{{ ipcode }}"
           SYSTEM_DESCRIPTION: "flex {{clusterid}} ec2 instance"
           CONTROL_DIR: /var/tmp/control
+          CONSUL_NODENAME: "{{ ansible_hostname }}"
+          CONSUL_HTTP_ADDR: "{{ansible_default_ipv4.address }}:8500"
 
     - name: start annihilator
       docker_container:

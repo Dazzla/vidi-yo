@@ -199,3 +199,5 @@
           SYSTEM_NAME: "flex-{{clusterid}}"
           SYSTEM_DESCRIPTION: "Physical host for flex {{clusterid}}"
           CONTROL_DIR: /var/tmp/control
+          CONSUL_NODENAME: "{{ ansible_hostname }}"
+          CONSUL_HTTP_ADDR: "{{ ansible_default_ipv4.address }}:8500"
