@@ -81,8 +81,12 @@
       pip:
         name: "{{item}}"
       with_items:
-        - docker-py
         - docker-compose
+
+    - name: hard lock docker-py for ansible bug
+      pip:
+        name: docker-py
+        version: 1.9.0
 
     - name: login to ooyala repo
       docker_login:
