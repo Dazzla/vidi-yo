@@ -13,8 +13,8 @@
         state: started
         enabled: yes
 
--hosts:
-  - blazegraph
+- hosts:
+  - blaze
   become: yes
   tasks:
     - name: create /blazegraph
@@ -31,9 +31,21 @@
         state: mounted
 
     - name: grab down blaze
-      shell: aws s3 cp --recursive --region eu-west-1 "s3://blazegraph-data/" .
-        args:
-          chdir: "/blazegraph"
+      shell: "[ -f /blazegraph/start-blaze.sh ] || aws s3 cp --recursive --region eu-west-1 s3://blazegraph-data/"
+      args:
+        chdir: "/blazegraph"
+
+    - name: fix blazegraph file perms
+      file:
+        path: /blazegraph/start-blaze.sh
+        state: file
+        mode: 0755
+
+
+    - name: unzip journalfile
+      shell: "[ -f /blazegraph/blazegraph-geonames.jnl ] ||  unzip blazegraph-geonames.jnl.zip"
+      args:
+        chdir: "/blazegraph"
 
     - name: install docker
       yum:
@@ -45,6 +57,48 @@
         name: docker
         state: started
         enabled: yes
+
+    - name: hard lock docker-py for ansible bug
+      pip:
+        name: docker-py
+        version: 1.9.0
+
+    - name: start monitoreador
+      docker_container:
+        name: monitoreador
+        image: quay.io/financialtimes/monitoreador
+        published_ports:
+          "8000:8000"
+        volumes:
+          - /var/tmp/control:/var/tmp/control:ro
+        env:
+          SYSTEM_CODE: "{{ ipcode }}"
+          SYSTEM_NAME: "consul cluster member"
+          SYSTEM_DESCRIPTION: "consul server cluste rmember node for flex {{clusterid}}"
+          CONTROL_DIR: /var/tmp/control
+
+
+    - name: start annihilator
+      docker_container:
+        name: annihilator
+        image: quay.io/financialtimes/annihilator
+        network_mode: host
+        env:
+          SLEEP: 10
+          MODE: blaze
+
+
+    - name: start blazegraph
+      docker_container:
+        name: blazegraph
+        image: quay.io/financialtimes/blazegraph
+        published_ports:
+          "127.0.0.1:9999:9999"
+        volumes:
+          - /blazegraph:/data/blazegraph
+        env:
+          SLEEP: 10
+          MODE: consul
 
 - hosts:
   - elasticsearch
