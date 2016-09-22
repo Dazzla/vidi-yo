@@ -13,6 +13,39 @@
         state: started
         enabled: yes
 
+-hosts:
+  - blazegraph
+  become: yes
+  tasks:
+    - name: create /blazegraph
+      file:
+        path: /blazegraph
+        state: directory
+        mode: 0755
+
+    - name: mount storage blazegraph
+      mount:
+        fstype: ext4
+        src: "/dev/xvdg1"
+        name: /blazegraph
+        state: mounted
+
+    - name: grab down blaze
+      shell: aws s3 cp --recursive --region eu-west-1 "s3://blazegraph-data/" .
+        args:
+          chdir: "/blazegraph"
+
+    - name: install docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: enable docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
 - hosts:
   - elasticsearch
   become: yes
