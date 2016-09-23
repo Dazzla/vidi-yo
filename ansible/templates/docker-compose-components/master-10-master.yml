@@ -21,6 +21,7 @@
     volumes:
       - /stuff/mio-enterprise/logs:/opt/jboss-eap-6.3/standalone/log
       - /stuff/mio-enterprise/storage:/flex/flex-enterprise/storage
+      - /stuff:/stuff
     extra_hosts:
       - consul:{{ ansible_default_ipv4.address }}
     hostname: {{ domain }}
