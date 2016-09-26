@@ -68,7 +68,38 @@
   become: yes
   vars:
     clusterid: staging
+
   tasks:
+    - name: configure pam
+      lineinfile:
+        dest: /etc/pam.d/login
+        line: "session required pam_limits.so"
+
+    - name: raise hard limit
+      lineinfile:
+        dest: /etc/security/limits.d/dockerify
+        create: yes
+        line: "* hard nofile 10240"
+
+    - name: raise soft limit
+      lineinfile:
+        dest: /etc/security/limits.d/dockerify
+        create: yes
+        line: "* soft nofile 4096"
+
+    - name: create docker dir
+      file:
+        path: /var/lib/docker
+        state: directory
+        recurse: yes
+
+    - name: mount docker volume
+      mount:
+        name: /var/lib/docker
+        src: /dev/xvdg1
+        fstype: ext4
+        state: mounted
+
     - name: hosts file magic
       shell: "echo -e $(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')\t\t$(hostname) >> /etc/hosts"
 

@@ -74,11 +74,13 @@ if [[ "${BUILDOUT}" = 'build' ]]; then
     ansible-playbook -i /ansible_hosts "/playbooks/${MODE}/hosts.yml" --extra-vars " \
       ami=$AMI \
       clusterid=$CLUSTER_ID \
+      cloudamqp_security_group_id=$CLOUDAMQP_SECURITY_GROUP_ID \
       db_database=$DB_DATABASE \
       db_password=$DB_PASSWORD \
       db_username=$DB_USERNAME \
       db_masterusername=$DB_MASTERUSERNAME \
       db_masterpassword=$DB_MASTERPASSWORD \
+      elasticsearch_security_group_id=$ELASTICSEARCH_SECURITY_GROUP_ID \
       env=$ENV \
       ipcode=$IPCODE \
       private_security_group_id=$PRIVATE_SECURITY_GROUP_ID \

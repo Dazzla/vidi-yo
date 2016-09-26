@@ -47,6 +47,12 @@ if mode == :preflight
   private_security_group = aws.security_group_lookup 'Private'
   puts "export PRIVATE_SECURITY_GROUP_ID=#{private_security_group.group_id}"
 
+  cloudamqp_security_group = aws.security_group_lookup 'Cloudamqp'
+  puts "export CLOUDAMQP_SECURITY_GROUP_ID=#{cloudamqp_security_group.group_id}"
+
+  elasticsearch_security_group = aws.security_group_lookup 'ElasticSearch'
+  puts "export ELASTICSEARCH_SECURITY_GROUP_ID=#{elasticsearch_security_group.group_id}"
+
   aws.vpc_public_subnets.each_with_index do |s,i|
     puts "export PUBLIC_SUBNET_#{i}=#{s}"
   end
