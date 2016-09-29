@@ -100,6 +100,7 @@ elif [[ "${BUILDOUT}" = 'install' ]]; then
 
     ansible-playbook -i /ansible_hosts "/playbooks/${MODE}/software.yml" --extra-vars " \
       all_hosts=$ALL_HOSTS \
+      amqp_url=${RABBIT_USERNAME}:${RABBIT_PASSWORD}@${RABBIT_HOST}/${RABBIT_VHOST} \
       clusterid=$CLUSTER_ID \
       consul=$CONSUL \
       db_host=$DB_HOST \

@@ -35,6 +35,7 @@
   - master
   - job
   - service
+  - utility
   become: yes
   vars:
     clusterid: staging
@@ -65,6 +66,7 @@
   - service
   - router
   - consul
+  - utility
   become: yes
   vars:
     clusterid: staging
@@ -226,6 +228,7 @@
   - job
   - service
   - router
+  - utility
   become: yes
   vars:
     consul: "consul-flex-{{clusterid}}.ft.com"
@@ -324,6 +327,29 @@
         src: ../../templates/docker-compose.yml
         dest: /root/docker-compose.yml
 
+ - hosts: localhost
+  connection: local
+  tasks:
+    - name: create docker-compose
+      shell: cat 00-base.yml utility*.yml > ../docker-compose.yml
+      args:
+        chdir: /playbooks/templates/docker-compose-components
+      ignore_errors: yes
+- hosts: utility
+  become: yes
+  tasks:
+    - name: set monitoreador name
+      lineinfile:
+        dest: /etc/monitoreador.env
+        create: yes
+        line: "export SYSTEM_NAME='flex {{clusterid}} utility node'"
+
+    - name: generate docker-compose
+      template:
+        src: ../../templates/docker-compose.yml
+        dest: /root/docker-compose.yml
+
+
 - hosts: router
   become: yes
   tasks:
@@ -338,6 +364,7 @@
   - master
   - job
   - service
+  - utility
   become: yes
   tasks:
     - name: start containers
@@ -349,6 +376,7 @@
   - job
   - service
   - router
+  - uility
   become: yes
   tasks:
     - name: start monitoreador
