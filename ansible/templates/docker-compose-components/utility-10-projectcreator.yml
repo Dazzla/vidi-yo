@@ -1,5 +1,5 @@
   projectcreator:
     image: quay.io/financialtimes/project-creator
-    command: -mode rabbit -amqp-uri amqp://{{ amqp_url }}
+    command: -mode rest
     environment:
       CLUSTER_ID: {{clusterid}}
