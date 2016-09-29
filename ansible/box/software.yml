@@ -141,7 +141,7 @@
   connection: local
   tasks:
     - name: create docker-compose
-      shell: cat 00-base.yml services-*.yml master-*.yml > ../docker-compose.yml
+      shell: cat 00-base.yml services-*.yml utility-*.yml master-*.yml > ../docker-compose.yml
       args:
         chdir: /playbooks/templates/docker-compose-components
       ignore_errors: yes
