@@ -3,3 +3,5 @@
     command: -mode rest
     environment:
       CLUSTER_ID: {{clusterid}}
+    ports:
+      - 8000
