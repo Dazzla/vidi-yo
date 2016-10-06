@@ -1,0 +1,5 @@
+  s3-club-7:
+    image: quay.io/financialtimes/s3-club-7
+    command: -cluster {{clusterid}} -flex-api https://master-flex-{{clusterid}}.ft.com/api/metadataDefinitions/
+    ports:
+      - 8000
