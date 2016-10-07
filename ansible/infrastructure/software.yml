@@ -112,14 +112,14 @@
       yum_repository:
         name: es
         description: es
-        baseurl: https://packages.elastic.co/elasticsearch/1.7/centos
+        baseurl: https://packages.elastic.co/elasticsearch/2.x/centos
         gpgcheck: yes
         gpgkey: https://packages.elastic.co/GPG-KEY-elasticsearch
 
     - name: install es
       yum:
-        name: elasticsearch
-        state: latest
+        name: elasticsearch-2.2.0-1
+        state: installed
 
     - name: bump java
       yum:
