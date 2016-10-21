@@ -1,5 +1,5 @@
   indexelastic:
-    image: registry.ooflex.net/flex-indexelastic-service #:1.1.362
+    image: registry.ooflex.net/flex-indexelastic-service:1.1.499
     extends:
       service: mio-base
     ports:

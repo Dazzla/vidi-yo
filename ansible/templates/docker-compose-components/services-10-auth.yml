@@ -1,5 +1,5 @@
   auth-service:
-    image: registry.ooflex.net/flex-authentication-service #:6.2.397
+    image: registry.ooflex.net/flex-authentication-service:6.2.458
     extends:
       service: mio-base
     ports:

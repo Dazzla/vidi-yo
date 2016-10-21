@@ -1,5 +1,5 @@
   metadatadesigner:
-    image: registry.ooflex.net/flex-metadatadesigner-app #:1.0.54
+    image: registry.ooflex.net/flex-metadatadesigner-app:1.0.128
     extends:
       service: mio-base
     environment:

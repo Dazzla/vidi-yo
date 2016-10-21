@@ -1,5 +1,5 @@
   workflowdesigner:
-    image: registry.ooflex.net/flex-workflowdesigner-app #:1.0.54
+    image: registry.ooflex.net/flex-workflowdesigner-app:6.0.174
     extends:
       service: mio-base
     environment:

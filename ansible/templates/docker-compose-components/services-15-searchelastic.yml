@@ -1,5 +1,5 @@
   searchelastic:
-    image: registry.ooflex.net/flex-searchelastic-service #:1.0.357
+    image: registry.ooflex.net/flex-searchelastic-service:1.0.408
     extends:
       service: mio-base
     ports:

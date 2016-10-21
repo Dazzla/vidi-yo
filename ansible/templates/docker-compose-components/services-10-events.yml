@@ -1,5 +1,5 @@
   events-service:
-    image: registry.ooflex.net/flex-events-service
+    image: registry.ooflex.net/flex-events-service:1.1.65
     extends:
       service: mio-base
     ports:
