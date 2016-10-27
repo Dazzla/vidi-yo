@@ -1,5 +1,5 @@
   master:
-    image: registry.ooflex.net/flex-master:5.3.1.22
+    image: registry.ooflex.net/flex-master:5.3.1.28
     environment:
       - APP_COMMAND_LINE=--hazelcast.publicIp={{ ansible_default_ipv4.address }}
       - IP={{ ansible_default_ipv4.address }}
