@@ -95,7 +95,7 @@ class Consul
     put('flex/flex-workflowdesigner-app/url', "https://#{workflow}/workflow/a/%account")
     put('flex/enterprise/api/url', api)
     put('flex/shared/flex-enterprise/api/url', api)
-    put('flex/shared/flex-enterprise/consoleUrl', api)
+    put('flex/shared/flex-enterprise/consoleUrl', fqdn)
     put('flex/enterprise/consoleUrl', fqdn)
 
     put('annihilator/flex/metadata_domain', metadata)
