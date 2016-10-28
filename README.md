@@ -6,6 +6,15 @@
 
 This unholy mess of ruby, ansible and bash does all kinds of clustering and building for our flex configuration and projects.
 
+## Testing the Ruby
+You will need consul running locally on localhost:8500
+
+```
+$brew install consul
+$consul agent -dev
+```
+rspec 
+
 ## Building!
 
 ```bash
