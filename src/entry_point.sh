@@ -36,7 +36,7 @@ fi
 : ${REGION:=eu-west-1}
 : ${ROLE_NAME:=FTMioRole}
 : ${SECURITY_GROUP_NAME:=ESR-Video-Test-VPC-Resources-SG}
-: ${SMTP_REPLAY:=mail.ft.com}
+: ${SMTP_REPLAY:=smtp.svc.ft.com}
 : ${VPC_NAME:=ESR-Video-Test-VPC}
 
 [ -f /.env ] && source /.env
