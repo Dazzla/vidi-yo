@@ -96,7 +96,7 @@ class Consul
     put('flex/enterprise/api/url', api)
     put('flex/shared/flex-enterprise/api/url', api)
     put('flex/shared/flex-enterprise/consoleUrl', api)
-    put('flex/enterprise/consoleUrl', fqdn)
+    put('flex/shared/flex-enterprise/consoleUrl', fqdn)
 
     put('annihilator/flex/metadata_domain', metadata)
     put('annihilator/flex/workflow_domain', workflow)

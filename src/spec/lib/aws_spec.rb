@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative '../spec_helper'
 
 describe 'AWS' do
   let(:aws_connection) { build(:aws) }

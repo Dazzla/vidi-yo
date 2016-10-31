@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative '../spec_helper'
 
 shared_examples 'kv_with_a_value' do
   it 'correctly sets the value' do
