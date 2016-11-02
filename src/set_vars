@@ -3,8 +3,7 @@
 require 'optparse'
 require 'inifile'
 
-$:<< './lib'
-require 'aws'
+require_relative 'aws'
 
 
 # Load the same creds as used by ansible and the CLI tool
