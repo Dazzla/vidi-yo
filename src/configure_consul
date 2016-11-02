@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
-$:<< './lib'
-require 'consul'
+require_relative 'lib/consul'
 
 def get key
   ENV.fetch(key)
